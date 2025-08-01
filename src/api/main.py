@@ -57,6 +57,10 @@ app.include_router(scheduling_router, tags=["scheduling"])
 # Include progress tracking router
 app.include_router(progress_router, tags=["progress"])
 
+# Include phased loading router
+from api.phased_loading_api import router as phased_loading_router
+app.include_router(phased_loading_router, tags=["phased-loading"])
+
 # Add GraphQL endpoint
 graphql_app = GraphQLRouter(schema)
 app.include_router(graphql_app, prefix="/graphql", tags=["graphql"])
