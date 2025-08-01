@@ -28,7 +28,7 @@ from api.models import (
 from api.scheduling import router as scheduling_router
 from api.rate_limiting import rate_limit_middleware, add_security_headers, get_current_user
 from api.graphql_schema import schema
-from ..ai_services import ai_analyzer, data_enricher
+from ai_services import ai_analyzer, data_enricher
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 
@@ -363,13 +363,13 @@ async def enrich_bill_data(
 @app.get("/federal/priority-metrics")
 async def get_federal_priority_metrics():
     """Get federal bills priority monitoring metrics"""
-    from ..federal_priority import federal_monitor
+    from federal_priority import federal_monitor
     return federal_monitor.get_federal_priority_metrics()
 
 @app.post("/federal/run-checks")
 async def run_federal_checks():
     """Run comprehensive federal bills quality checks"""
-    from ..federal_priority import federal_monitor
+    from federal_priority import federal_monitor
     report = federal_monitor.run_comprehensive_check()
     return {
         "report_id": f"federal_check_{int(time.time())}",

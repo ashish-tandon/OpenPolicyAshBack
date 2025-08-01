@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -139,20 +137,21 @@ services:
       - openpolicy_network
     restart: unless-stopped
 
-  # Modern Web Dashboard
-  dashboard:
-    build:
-      context: ./dashboard
-      dockerfile: Dockerfile
-    container_name: openpolicy_dashboard
-    ports:
-      - "3000:3000"
-    depends_on:
-      api:
-        condition: service_started
-    networks:
-      - openpolicy_network
-    restart: unless-stopped
+  # Modern Web Dashboard (temporarily disabled due to TypeScript build issues)
+  # Uncomment and fix TypeScript errors to enable
+  # dashboard:
+  #   build:
+  #     context: ./dashboard
+  #     dockerfile: Dockerfile
+  #   container_name: openpolicy_dashboard
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     api:
+  #       condition: service_started
+  #   networks:
+  #     - openpolicy_network
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:

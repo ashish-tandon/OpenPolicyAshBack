@@ -9,13 +9,13 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from ..database import (
+from database import (
     Jurisdiction, Representative, Bill, Committee, Event, Vote,
     JurisdictionType, RepresentativeRole, BillStatus,
     get_session_factory, get_database_config, create_engine_from_config
 )
-from ..federal_priority import federal_monitor
-from ..ai_services import ai_analyzer, data_enricher
+from federal_priority import federal_monitor
+from ai_services import ai_analyzer, data_enricher
 
 # Database setup
 config = get_database_config()
