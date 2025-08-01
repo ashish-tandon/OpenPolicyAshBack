@@ -1,276 +1,210 @@
 # OpenPolicy Backend Ash Aug 2025
 
-A comprehensive, single-command solution for collecting, managing, and analyzing Canadian civic data with a beautiful modern web interface.
+A comprehensive, single-command solution for collecting, managing, and analyzing Canadian civic data with a modern architecture.
 
 ## 🚀 Quick Start
 
-**Get everything running with one command:**
+**Get the core system running with one command:**
 
 ```bash
 ./setup.sh
 ```
 
 That's it! The script will:
-- Set up the environment
-- Build and start all services
-- Initialize the database
-- Run a test scrape to verify everything works
+- Install Docker automatically if needed
+- Build and start all core services
+- Set up the database with proper schema
+- Configure all dependencies
 
 ## 🌟 What You Get
 
-### 📊 Beautiful Modern Dashboard
-- **Real-time Overview**: Statistics, charts, and system health monitoring
-- **Database Browser**: Search, filter, and export all civic data
-- **Scraper Management**: Schedule and monitor data collection tasks
-- **Federal Priority**: Enhanced monitoring for Canadian federal bills
-- **Responsive Design**: Works perfectly on desktop and mobile
+### ✅ **Working Core Services**
+- **PostgreSQL Database**: Complete civic data storage (Port 5432)
+- **Redis**: Task queue and caching (Port 6379) 
+- **Celery Beat**: Automated scheduling system
+- **Celery Worker**: Background task processing
+- **API Infrastructure**: RESTful endpoints (Port 8000)
 
-### 🇨🇦 Comprehensive Data Collection
+### 🔧 **Current Status**
+- ✅ **Database**: Fully operational with schema
+- ✅ **Task Scheduling**: Automated scraping system active
+- ✅ **Data Storage**: Complete PostgreSQL setup
+- ✅ **Infrastructure**: Docker orchestration working
+- 🔨 **Dashboard**: Under development (TypeScript build issues)
+- 🔨 **GraphQL API**: Schema refinement in progress
+- 🔨 **Flower Monitoring**: Configuration updates needed
+
+### 🇨🇦 **Canadian Civic Data Coverage**
 - **123 Active Jurisdictions** across Canada
-- **Federal Priority**: Enhanced monitoring for Parliament of Canada
-- **14 Provincial/Territorial** governments
-- **108 Municipal** jurisdictions
-- **Automated Daily Updates** with smart error recovery
-
-### 🛠 Enterprise Features
-- **One-Command Setup**: Complete deployment with `./setup.sh`
-- **Beautiful UI**: Modern React dashboard with real-time updates
-- **Federal Bills Priority**: Special monitoring for critical legislation
-- **Quality Assurance**: Automated spot checks and validation
-- **API-First**: Full REST API with Swagger documentation
-- **Container-Ready**: Full Docker Compose orchestration
+- **Federal Priority**: Parliament of Canada ready
+- **14 Provincial/Territorial** governments configured
+- **108 Municipal** jurisdictions prepared
+- **Automated Data Collection** framework in place
 
 ## 🎯 Access Your System
 
-After running `./setup.sh`, access:
+After running `./setup.sh`, you can access:
 
-- **📊 Dashboard**: http://localhost:3000
-- **🔧 API Docs**: http://localhost:8000/docs
-- **🌺 Monitoring**: http://localhost:5555
-- **🗄️ Database**: localhost:5432
+- **🗄️ Database**: localhost:5432 (opencivicdata/openpolicy/openpolicy123)
+- **📡 Redis**: localhost:6379
+- **🔧 API Base**: http://localhost:8000 (when fully operational)
+- **🌺 Monitoring**: http://localhost:5555 (when configured)
 
 ## ✨ Key Features
 
-### 🔥 Federal Bills Priority
-The system provides **enhanced monitoring** specifically for Federal Canadian bills:
-- ✅ **Automated Quality Checks**: Format validation, status progression
-- ✅ **Critical Bill Detection**: Identifies important legislation automatically
-- ✅ **Data Freshness Monitoring**: Ensures federal data is always current
-- ✅ **Smart Alerts**: Proactive notifications for issues
-- ✅ **Priority Scheduling**: More frequent updates for federal data
+### 🔥 **One-Command Setup**
+- Automatic Docker installation and configuration
+- Complete dependency management
+- Environment variable generation
+- Database schema initialization
 
-### 📋 Data Collected
-- **Representatives**: MPs, MPPs/MLAs, Mayors, Councillors
-- **Bills**: Federal bills with priority monitoring, provincial and municipal legislation
-- **Committees**: Standing and special committees with membership
-- **Events**: Meetings, votes, readings, legislative activities
-- **Votes**: Individual representative voting records
-
-### 🎨 Modern Dashboard Features
-- **Interactive Charts**: Visualize data distributions and trends
-- **Advanced Filtering**: Search and filter by jurisdiction, party, status
-- **Data Export**: CSV export for all data types
-- **Real-time Updates**: Live monitoring of scraping tasks
-- **Responsive Design**: Beautiful interface on any device
-- **Federal Focus**: Special views for priority federal legislation
-
-## 🏗 Architecture
-
+### 🏗 **Production-Ready Architecture**
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Dashboard     │    │    Database      │    │   Scheduling    │
+│   Task Queue    │    │    Database      │    │   Scheduling    │
 │                 │    │                  │    │                 │
-│ • React UI      │───▶│ • PostgreSQL     │◀───│ • Celery Tasks  │
-│ • Real-time     │    │ • Federal Focus  │    │ • Federal Prio  │
-│ • Responsive    │    │ • Quality Checks │    │ • Auto Recovery │
-│ • Export        │    │ • Validation     │    │ • Smart Alerts  │
+│ • Celery Worker │───▶│ • PostgreSQL     │◀───│ • Celery Beat   │
+│ • Redis Broker  │    │ • Federal Focus  │    │ • Automated     │
+│ • Task Results  │    │ • Data Integrity │    │ • Error Recovery│
 └─────────────────┘    └──────────────────┘    └─────────────────┘
         │                       │                       │
         │               ┌───────────────┐               │
         └──────────────▶│   API Layer   │◀──────────────┘
                         │               │
                         │ • FastAPI     │
+                        │ • GraphQL     │
                         │ • OpenAPI     │
                         │ • Rate Limit  │
-                        │ • Auth Ready  │
                         └───────────────┘
 ```
 
-## 🎛 Dashboard Features
+### 📋 **Data Structure Ready**
+- **Representatives**: MPs, MPPs/MLAs, Mayors, Councillors
+- **Bills**: Federal (priority), provincial, and municipal legislation
+- **Committees**: Standing and special committees with membership
+- **Events**: Meetings, votes, readings, legislative activities
+- **Votes**: Individual representative voting records
 
-### 📈 Overview Dashboard
-- **Key Metrics**: Total jurisdictions, representatives, bills
-- **Visual Charts**: Distribution by type, status trends
-- **Recent Activity**: Latest updates and changes
-- **System Health**: Real-time status monitoring
+## 🛠 **System Management**
 
-### 🗃 Database Browser
-- **Tabbed Interface**: Jurisdictions, Representatives, Bills
-- **Advanced Search**: Text search with smart filtering
-- **Export Capability**: CSV download for analysis
-- **Detailed Views**: Complete record information
-
-### ⏰ Scheduling Interface
-- **Quick Actions**: One-click task scheduling
-- **Federal Priority**: Special federal-only scrapers
-- **Task Monitoring**: Real-time progress tracking
-- **Performance Metrics**: Success rates and timing
-
-### 🔍 Federal Bills Priority
-- **Enhanced Monitoring**: Special attention to federal legislation
-- **Quality Checks**: Automated validation and spot checks
-- **Critical Detection**: Identifies important bills automatically
-- **Priority Alerts**: Immediate notifications for federal issues
-
-## 🛠 Advanced Usage
-
-### Manual Controls
+### Start/Stop Services
 ```bash
 # Stop the system
-docker-compose down
+sudo docker compose down
 
-# Restart services
-docker-compose restart
+# Restart all services
+sudo docker compose restart
+
+# View service status
+sudo docker compose ps
 
 # View logs
-docker-compose logs -f
-
-# Run federal-only scraper
-docker-compose exec api python manage.py run --type federal
-
-# Check federal priority status
-docker-compose exec api python manage.py federal-check
+sudo docker compose logs -f
 ```
 
-### Environment Configuration
-Customize your deployment by editing `.env`:
+### Database Access
+```bash
+# Connect to database
+psql -h localhost -p 5432 -U openpolicy -d opencivicdata
+
+# Check service health
+sudo docker compose exec postgres pg_isready
+```
+
+## 🔧 **Configuration**
+
+The system uses a comprehensive `.env` file with all necessary variables:
 
 ```bash
-# Federal Priority Settings
-FEDERAL_PRIORITY_ENABLED=true
-FEDERAL_CHECK_INTERVAL=4  # hours
-FEDERAL_AI_SUMMARIES=true
+# Core system is working with these defaults
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=opencivicdata
+DB_USER=openpolicy
+DB_PASSWORD=openpolicy123
 
-# API Security
-API_RATE_LIMIT=1000
-API_KEY_REQUIRED=false
+# Redis configuration
+REDIS_URL=redis://redis:6379/0
 
-# Data Quality
-QUALITY_CHECKS_ENABLED=true
-QUALITY_ALERT_THRESHOLD=90
+# Security (automatically generated)
+JWT_SECRET_KEY=[auto-generated]
 ```
 
-## 🔐 Production Deployment
+## 🚀 **Next Steps**
 
-For production use:
+The core infrastructure is operational. To complete the system:
 
-1. **Secure Configuration**:
-   ```bash
-   # Generate secure passwords
-   openssl rand -hex 32
-   
-   # Update .env with production values
-   DB_PASSWORD=your_secure_password
-   JWT_SECRET_KEY=your_secure_jwt_key
-   ```
+1. **Fix GraphQL Schema**: Resolve type annotation issues
+2. **Complete Dashboard**: Fix TypeScript build errors
+3. **Configure Flower**: Complete monitoring setup
+4. **Initialize Scrapers**: Begin data collection
 
-2. **Enable Security Features**:
-   ```bash
-   API_KEY_REQUIRED=true
-   API_RATE_LIMIT_ENABLED=true
-   ```
+## 🛠 **Advanced Usage**
 
-3. **Configure Backups**:
-   ```bash
-   BACKUP_ENABLED=true
-   BACKUP_SCHEDULE="0 2 * * *"
-   ```
+### Manual Task Execution
+```bash
+# Run database initialization
+sudo docker compose exec api python manage.py init
 
-## 📊 Federal Bills Priority System
+# Check service connectivity
+sudo docker compose exec api python -c "import redis; r=redis.Redis(host='redis'); print(r.ping())"
 
-The system includes **comprehensive federal bills monitoring**:
+# Test database connection
+sudo docker compose exec postgres psql -U openpolicy -d opencivicdata -c "SELECT COUNT(*) FROM information_schema.tables;"
+```
 
-### ✅ Automated Checks
-- **Format Validation**: Ensures C-# and S-# identifier formats
-- **Title Quality**: Validates title completeness and length
-- **Status Progression**: Monitors logical legislative flow
-- **Data Freshness**: Alerts on stale federal data
-- **Critical Detection**: Identifies high-priority legislation
+### Development Commands
+```bash
+# Rebuild specific service
+sudo docker compose build api
 
-### 🎯 Priority Features
-- **Enhanced Frequency**: Federal bills updated every 4 hours
-- **Quality Validation**: Comprehensive spot checks
-- **Smart Alerts**: Immediate notification of issues
-- **Detailed Reporting**: Federal-specific monitoring reports
-- **Critical Bill Tracking**: Special attention to important legislation
+# View specific service logs
+sudo docker compose logs api
 
-### 📋 Federal Monitoring Report
-Access detailed federal monitoring via the dashboard or API:
-- Check results with pass/warning/fail status
-- Actionable recommendations
-- Data quality metrics
-- Priority bill identification
+# Enter service shell
+sudo docker compose exec api bash
+```
 
-## 🌍 Data Sources
+## 🔐 **Production Deployment**
 
-### Federal (Priority Enhanced)
-- **Parliament of Canada**: https://www.ourcommons.ca/
-  - Enhanced monitoring with quality checks
-  - Priority scheduling and validation
-  - AI-powered summaries (optional)
+For production use, update `.env` with:
 
-### Provincial/Territorial (14 jurisdictions)
-- Complete coverage of all provinces and territories
-- Automated daily updates
-- Standardized data collection
+```bash
+# Generate secure values
+ENVIRONMENT=production
+DEBUG=false
+DB_PASSWORD=[secure-random-password]
+JWT_SECRET_KEY=[secure-random-key]
+API_KEY_REQUIRED=true
+```
 
-### Municipal (108 jurisdictions)
-- Major cities across all provinces
-- Comprehensive local government data
-- Scalable collection system
+## 📊 **System Requirements**
 
-## 🏆 What Makes This Special
+- **Minimum**: 4GB RAM, 2 CPU cores, 10GB storage
+- **Recommended**: 8GB RAM, 4 CPU cores, 50GB storage
+- **OS**: Linux (tested on Ubuntu), macOS with Docker Desktop
+- **Dependencies**: Docker and Docker Compose (auto-installed)
 
-### 🚀 **One-Command Setup**
-No complex configuration - just run `./setup.sh` and everything works
+## 🤝 **Contributing**
 
-### 🎨 **Beautiful Interface**
-Modern, responsive dashboard that's actually enjoyable to use
+The core infrastructure is ready for development:
 
-### 🇨🇦 **Federal Priority**
-Special attention to Canadian federal legislation with enhanced monitoring
+1. **Add Scrapers**: Extend data collection capabilities
+2. **Enhance API**: Complete GraphQL implementation
+3. **Build Dashboard**: Complete the React frontend
+4. **Add Features**: Federal priority monitoring, AI analysis
 
-### 🔄 **Self-Healing**
-Automatic error recovery and retry mechanisms
+## 📄 **Technical Details**
 
-### 📊 **Data Quality**
-Built-in validation and quality assurance systems
-
-### 🛠 **Production Ready**
-Enterprise features like rate limiting, authentication, and monitoring
-
-## 🤝 Contributing
-
-This is a complete, production-ready system, but contributions are welcome:
-
-1. **Report Issues**: Use GitHub issues for bugs or suggestions
-2. **Add Jurisdictions**: Help expand coverage to more municipalities
-3. **Enhance Features**: Contribute to federal monitoring or dashboard features
-4. **Documentation**: Improve setup guides and API documentation
-
-## 📄 License
-
-MIT License - Making Canadian civic data accessible to everyone.
-
-## 🙏 Acknowledgments
-
-- **OpenCivicData**: Standards and framework foundation
-- **Government of Canada**: Public data availability
-- **Canadian Provinces & Municipalities**: Open data initiatives
-- **Community**: Feedback and contributions
+- **Python 3.13**: Latest Python with comprehensive dependencies
+- **PostgreSQL 17**: Modern database with full civic data schema
+- **Redis 7**: High-performance task queue and caching
+- **FastAPI**: Modern Python web framework
+- **Celery**: Distributed task processing
+- **Docker**: Containerized deployment
 
 ---
 
-**🇨🇦 OpenPolicy Backend Ash Aug 2025** - The most comprehensive Canadian civic data platform with federal bills priority monitoring and a beautiful modern interface.
+**🇨🇦 OpenPolicy Backend Ash Aug 2025** - The foundation for comprehensive Canadian civic data collection and analysis.
 
-**Ready in one command: `./setup.sh`** ✨
+**Core infrastructure operational. Ready for feature development.**
