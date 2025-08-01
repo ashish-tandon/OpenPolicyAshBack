@@ -5,11 +5,12 @@ This module provides a FastAPI-based REST API for accessing Canadian civic data
 from the OpenPolicy Database.
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Query, Path
+from fastapi import FastAPI, HTTPException, Depends, Query, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 import sys
+import time
 from pathlib import Path as PathLib
 
 # Add src to path
@@ -24,6 +25,12 @@ from api.models import (
     JurisdictionResponse, RepresentativeResponse, BillResponse,
     CommitteeResponse, EventResponse, VoteResponse, StatsResponse
 )
+from api.scheduling import router as scheduling_router
+from api.rate_limiting import rate_limit_middleware, add_security_headers, get_current_user
+from api.graphql_schema import schema
+from ..ai_services import ai_analyzer, data_enricher
+import strawberry
+from strawberry.fastapi import GraphQLRouter
 
 # Create FastAPI app
 app = FastAPI(
@@ -42,6 +49,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include scheduling router
+app.include_router(scheduling_router, tags=["scheduling"])
+
+# Add GraphQL endpoint
+graphql_app = GraphQLRouter(schema)
+app.include_router(graphql_app, prefix="/graphql", tags=["graphql"])
+
+# Add middleware for rate limiting and security
+app.middleware("http")(add_security_headers)
+
+@app.middleware("http")
+async def rate_limiting_middleware(request: Request, call_next):
+    await rate_limit_middleware(request)
+    response = await call_next(request)
+    return response
 
 # Database setup
 config = get_database_config()
@@ -299,6 +322,108 @@ async def get_votes(
     
     votes = query.offset(offset).limit(limit).all()
     return [VoteResponse.from_orm(v) for v in votes]
+
+# AI and Data Enrichment Endpoints
+@app.post("/ai/analyze-bill/{bill_id}")
+async def analyze_bill_with_ai(
+    bill_id: str = Path(..., description="Bill ID"),
+    user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate AI analysis for a specific bill"""
+    bill = db.query(Bill).filter(Bill.id == bill_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    analysis = await ai_analyzer.summarize_bill(bill)
+    return analysis
+
+@app.post("/ai/federal-briefing")
+async def get_federal_briefing(
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get daily AI briefing for federal parliamentary activity"""
+    briefing = await ai_analyzer.generate_daily_briefing()
+    return briefing
+
+@app.post("/enrich/bill/{bill_id}")
+async def enrich_bill_data(
+    bill_id: str = Path(..., description="Bill ID"),
+    user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Enrich bill data with external sources"""
+    bill = db.query(Bill).filter(Bill.id == bill_id).first()
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    
+    enrichment = await data_enricher.enrich_bill_data(bill)
+    return enrichment
+
+@app.get("/federal/priority-metrics")
+async def get_federal_priority_metrics():
+    """Get federal bills priority monitoring metrics"""
+    from ..federal_priority import federal_monitor
+    return federal_monitor.get_federal_priority_metrics()
+
+@app.post("/federal/run-checks")
+async def run_federal_checks():
+    """Run comprehensive federal bills quality checks"""
+    from ..federal_priority import federal_monitor
+    report = federal_monitor.run_comprehensive_check()
+    return {
+        "report_id": f"federal_check_{int(time.time())}",
+        "total_bills": report.total_bills,
+        "checks_performed": report.checks_performed,
+        "passed_checks": report.passed_checks,
+        "warnings": report.warnings,
+        "failures": report.failures,
+        "recommendations": report.recommendations,
+        "generated_at": report.checked_at.isoformat()
+    }
+
+@app.get("/auth/token")
+async def get_auth_token(api_key: str = Query(..., description="API key for authentication")):
+    """Get JWT token using API key"""
+    from api.rate_limiting import authenticate_api_key
+    return await authenticate_api_key(api_key)
+
+# Enhanced search endpoint
+@app.get("/search")
+async def universal_search(
+    q: str = Query(..., description="Search query"),
+    type: Optional[str] = Query(None, description="Search type: jurisdictions, representatives, bills, all"),
+    limit: int = Query(10, ge=1, le=100, description="Number of results per type"),
+    db: Session = Depends(get_db)
+):
+    """Universal search across all data types"""
+    results = {}
+    
+    if type is None or type == "all" or type == "jurisdictions":
+        jurisdictions = db.query(Jurisdiction).filter(
+            Jurisdiction.name.ilike(f"%{q}%")
+        ).limit(limit).all()
+        results["jurisdictions"] = [JurisdictionResponse.from_orm(j) for j in jurisdictions]
+    
+    if type is None or type == "all" or type == "representatives":
+        representatives = db.query(Representative).filter(
+            Representative.name.ilike(f"%{q}%")
+        ).limit(limit).all()
+        results["representatives"] = [RepresentativeResponse.from_orm(r) for r in representatives]
+    
+    if type is None or type == "all" or type == "bills":
+        bills = db.query(Bill).filter(
+            (Bill.title.ilike(f"%{q}%")) |
+            (Bill.summary.ilike(f"%{q}%")) |
+            (Bill.identifier.ilike(f"%{q}%"))
+        ).limit(limit).all()
+        results["bills"] = [BillResponse.from_orm(b) for b in bills]
+    
+    return {
+        "query": q,
+        "results": results,
+        "total_results": sum(len(v) for v in results.values()) if isinstance(results, dict) else 0
+    }
 
 if __name__ == "__main__":
     import uvicorn
