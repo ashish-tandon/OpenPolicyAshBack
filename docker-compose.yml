@@ -120,22 +120,56 @@ services:
 
   # Celery Flower (Monitoring)
   flower:
-    build:
-      context: .
-      dockerfile: Dockerfile.flower
-    container_name: openpolicy_flower
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-      FLOWER_PORT: 5555
+    image: mher/flower:2.0
     ports:
       - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     networks:
-      - openpolicy_network
-    restart: unless-stopped
+      - openpolicy-network
+
+  # Open Policy Agent - Policy-as-Code Engine
+  opa:
+    image: openpolicyagent/opa:latest-debug
+    ports:
+      - "8181:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
+      - "/policies"
+    volumes:
+      - ./policies:/policies:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - openpolicy-network
+
+  # Policy Validator Service
+  policy-validator:
+    build:
+      context: .
+      dockerfile: Dockerfile.policy-validator
+    depends_on:
+      - opa
+      - postgres
+      - redis
+    environment:
+      - OPA_URL=http://opa:8181
+      - DATABASE_URL=postgresql://openpolicy:openpolicy123@postgres:5432/opencivicdata
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./policies:/policies:ro
+      - .:/app
+    networks:
+      - openpolicy-network
 
   # Modern Web Dashboard (temporarily disabled due to TypeScript build issues)
   # Uncomment and fix TypeScript errors to enable
