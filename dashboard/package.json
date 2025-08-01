@@ -1,7 +1,7 @@
 {
-  "name": "openpolicy-dashboard",
+  "name": "openpolicy-backend-ash-aug-2025-dashboard",
   "version": "1.0.0",
-  "description": "Modern web dashboard for OpenPolicy Database",
+  "description": "Modern web dashboard for OpenPolicy Backend Ash Aug 2025",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.0.18",

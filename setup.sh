@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🇨🇦 OpenPolicy Database Setup"
+echo "🇨🇦 OpenPolicy Backend Ash Aug 2025 Setup"
 echo "============================="
 
 # Check if Docker and Docker Compose are installed
@@ -63,7 +63,7 @@ echo "🧪 Running test scrape..."
 docker-compose exec -T api python manage.py run --test --max-records 5
 
 echo ""
-echo "🎉 OpenPolicy Database is now running!"
+echo "🎉 OpenPolicy Backend Ash Aug 2025 is now running!"
 echo ""
 echo "📊 Access the Dashboard: http://localhost:3000"
 echo "🔧 API Documentation: http://localhost:8000/docs"

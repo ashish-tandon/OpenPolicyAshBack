@@ -1,4 +1,4 @@
-# OpenPolicy Database
+# OpenPolicy Backend Ash Aug 2025
 
 A comprehensive, single-command solution for collecting, managing, and analyzing Canadian civic data with a beautiful modern web interface.
 
@@ -271,6 +271,6 @@ MIT License - Making Canadian civic data accessible to everyone.
 
 ---
 
-**🇨🇦 OpenPolicy Database** - The most comprehensive Canadian civic data platform with federal bills priority monitoring and a beautiful modern interface.
+**🇨🇦 OpenPolicy Backend Ash Aug 2025** - The most comprehensive Canadian civic data platform with federal bills priority monitoring and a beautiful modern interface.
 
 **Ready in one command: `./setup.sh`** ✨
