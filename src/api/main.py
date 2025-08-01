@@ -24,6 +24,7 @@ from api.models import (
     JurisdictionResponse, RepresentativeResponse, BillResponse,
     CommitteeResponse, EventResponse, VoteResponse, StatsResponse
 )
+from api.scheduling import router as scheduling_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -42,6 +43,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include scheduling router
+app.include_router(scheduling_router, tags=["scheduling"])
 
 # Database setup
 config = get_database_config()
