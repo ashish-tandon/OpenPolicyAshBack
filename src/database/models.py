@@ -7,7 +7,7 @@ including representatives, bills, committees, events, votes, and other civic inf
 
 from sqlalchemy import (
     create_engine, Column, Integer, String, Text, DateTime, Boolean,
-    ForeignKey, JSON, Enum, UniqueConstraint, Index
+    ForeignKey, JSON, Enum, UniqueConstraint, Index, Date
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -361,6 +361,96 @@ class DataQualityIssue(Base):
         Index('idx_data_quality_severity', 'severity'),
         Index('idx_data_quality_detected', 'detected_at'),
     )
+
+# Enhanced Parliamentary Models - OpenParliament Integration
+class ParliamentarySession(Base):
+    __tablename__ = "parliamentary_sessions"
+    
+    id = Column(Integer, primary_key=True)
+    parliament_number = Column(Integer, nullable=False)
+    session_number = Column(Integer, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    hansard_records = relationship("HansardRecord", back_populates="session")
+    committee_meetings = relationship("CommitteeMeeting", back_populates="session")
+    
+    def __repr__(self):
+        return f"<ParliamentarySession {self.parliament_number}-{self.session_number}>"
+
+class HansardRecord(Base):
+    __tablename__ = "hansard_records"
+    
+    id = Column(Integer, primary_key=True)
+    date = Column(Date, nullable=False)
+    sitting_number = Column(Integer)
+    document_url = Column(String(500))
+    pdf_url = Column(String(500))
+    xml_url = Column(String(500))
+    processed = Column(Boolean, default=False)
+    speech_count = Column(Integer, default=0)
+    
+    # Foreign Keys
+    session_id = Column(Integer, ForeignKey("parliamentary_sessions.id"))
+    
+    # Relationships
+    session = relationship("ParliamentarySession", back_populates="hansard_records")
+    speeches = relationship("Speech", back_populates="hansard")
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<HansardRecord {self.date} Session {self.session_id}>"
+
+class Speech(Base):
+    __tablename__ = "speeches"
+    
+    id = Column(Integer, primary_key=True)
+    speaker_name = Column(String(200))
+    speaker_title = Column(String(200))
+    content = Column(Text)
+    time_spoken = Column(DateTime)
+    speech_type = Column(String(50))  # 'statement', 'question', 'response', etc.
+    
+    # Foreign Keys
+    hansard_id = Column(Integer, ForeignKey("hansard_records.id"))
+    representative_id = Column(Integer, ForeignKey("representatives.id"), nullable=True)
+    
+    # Relationships
+    hansard = relationship("HansardRecord", back_populates="speeches")
+    representative = relationship("Representative")
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<Speech by {self.speaker_name} in Hansard {self.hansard_id}>"
+
+class CommitteeMeeting(Base):
+    __tablename__ = "committee_meetings"
+    
+    id = Column(Integer, primary_key=True)
+    committee_name = Column(String(200), nullable=False)
+    meeting_date = Column(Date, nullable=False)
+    meeting_number = Column(Integer)
+    evidence_url = Column(String(500))
+    transcript_url = Column(String(500))
+    processed = Column(Boolean, default=False)
+    
+    # Foreign Keys  
+    session_id = Column(Integer, ForeignKey("parliamentary_sessions.id"))
+    
+    # Relationships
+    session = relationship("ParliamentarySession", back_populates="committee_meetings")
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<CommitteeMeeting {self.committee_name} on {self.meeting_date}>"
 
 # Database utility functions
 def create_engine_from_config(database_url: str):
