@@ -41,3 +41,15 @@ mypy>=1.5.0
 
 # Documentation
 fastapi-users>=12.0.0
+
+# AI and Enhanced Features
+openai>=1.0.0
+PyJWT>=2.8.0
+strawberry-graphql[fastapi]>=0.200.0
+
+# Rate Limiting and Security
+slowapi>=0.1.9
+python-multipart>=0.0.6
+
+# Monitoring
+flower>=2.0.0
