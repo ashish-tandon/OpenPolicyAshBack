@@ -28,6 +28,7 @@ from api.models import (
 from api.scheduling import router as scheduling_router
 from api.rate_limiting import rate_limit_middleware, add_security_headers, get_current_user
 from api.graphql_schema import schema
+from api.progress_api import router as progress_router
 from ai_services import ai_analyzer, data_enricher
 import strawberry
 from strawberry.fastapi import GraphQLRouter
@@ -52,6 +53,9 @@ app.add_middleware(
 
 # Include scheduling router
 app.include_router(scheduling_router, tags=["scheduling"])
+
+# Include progress tracking router
+app.include_router(progress_router, tags=["progress"])
 
 # Add GraphQL endpoint
 graphql_app = GraphQLRouter(schema)

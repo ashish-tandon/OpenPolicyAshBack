@@ -9,6 +9,7 @@ import {
   PlayIcon,
   Bars3Icon,
   XMarkIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { useQuery } from '@tanstack/react-query'
 import { healthApi } from '../lib/api'
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Database', href: '/database', icon: DatabaseIcon },
   { name: 'Scrapers', href: '/scrapers', icon: PlayIcon },
   { name: 'Scheduling', href: '/scheduling', icon: ClockIcon },
+  { name: 'Progress', href: '/progress', icon: ChartBarIcon },
   { name: 'Monitoring', href: '/monitoring', icon: EyeIcon },
   { name: 'Settings', href: '/settings', icon: CogIcon },
 ]
