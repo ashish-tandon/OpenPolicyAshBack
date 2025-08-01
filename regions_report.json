@@ -1,0 +1,1243 @@
+{
+  "federal": [
+    {
+      "name": "Canada (Federal)",
+      "directory": "ca",
+      "path": "scrapers/ca",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    }
+  ],
+  "provincial": [
+    {
+      "name": "ON (Provincial)",
+      "directory": "ca_on",
+      "path": "scrapers/ca_on",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "SK (Provincial)",
+      "directory": "ca_sk",
+      "path": "scrapers/ca_sk",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "PE (Provincial)",
+      "directory": "ca_pe",
+      "path": "scrapers/ca_pe",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "CANDIDATES (Provincial)",
+      "directory": "ca_candidates",
+      "path": "scrapers/ca_candidates",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "NT (Provincial)",
+      "directory": "ca_nt",
+      "path": "scrapers/ca_nt",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "AB (Provincial)",
+      "directory": "ca_ab",
+      "path": "scrapers/ca_ab",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "NL (Provincial)",
+      "directory": "ca_nl",
+      "path": "scrapers/ca_nl",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "YT (Provincial)",
+      "directory": "ca_yt",
+      "path": "scrapers/ca_yt",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "QC (Provincial)",
+      "directory": "ca_qc",
+      "path": "scrapers/ca_qc",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "MB (Provincial)",
+      "directory": "ca_mb",
+      "path": "scrapers/ca_mb",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "BC (Provincial)",
+      "directory": "ca_bc",
+      "path": "scrapers/ca_bc",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "NS (Provincial)",
+      "directory": "ca_ns",
+      "path": "scrapers/ca_ns",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "NU (Provincial)",
+      "directory": "ca_nu",
+      "path": "scrapers/ca_nu",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "NB (Provincial)",
+      "directory": "ca_nb",
+      "path": "scrapers/ca_nb",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    }
+  ],
+  "municipal": [
+    {
+      "name": "Fredericton, NB",
+      "directory": "ca_nb_fredericton",
+      "path": "scrapers/ca_nb_fredericton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Winnipeg, MB",
+      "directory": "ca_mb_winnipeg",
+      "path": "scrapers/ca_mb_winnipeg",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Moncton, NB",
+      "directory": "ca_nb_moncton",
+      "path": "scrapers/ca_nb_moncton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Ajax, ON",
+      "directory": "ca_on_ajax",
+      "path": "scrapers/ca_on_ajax",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "New Westminster, BC",
+      "directory": "ca_bc_new_westminster",
+      "path": "scrapers/ca_bc_new_westminster",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Cambridge, ON",
+      "directory": "ca_on_cambridge",
+      "path": "scrapers/ca_on_cambridge",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "London, ON",
+      "directory": "ca_on_london",
+      "path": "scrapers/ca_on_london",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Kawartha Lakes, ON",
+      "directory": "ca_on_kawartha_lakes",
+      "path": "scrapers/ca_on_kawartha_lakes",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saint John, NB",
+      "directory": "ca_nb_saint_john",
+      "path": "scrapers/ca_nb_saint_john",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Richmond, BC",
+      "directory": "ca_bc_richmond",
+      "path": "scrapers/ca_bc_richmond",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Kelowna, BC",
+      "directory": "ca_bc_kelowna",
+      "path": "scrapers/ca_bc_kelowna",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Hamilton, ON",
+      "directory": "ca_on_hamilton",
+      "path": "scrapers/ca_on_hamilton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Toronto, ON",
+      "directory": "ca_on_toronto",
+      "path": "scrapers/ca_on_toronto",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Surrey, BC",
+      "directory": "ca_bc_surrey",
+      "path": "scrapers/ca_bc_surrey",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Waterloo, ON",
+      "directory": "ca_on_waterloo",
+      "path": "scrapers/ca_on_waterloo",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Lambton, ON",
+      "directory": "ca_on_lambton",
+      "path": "scrapers/ca_on_lambton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Caledon, ON",
+      "directory": "ca_on_caledon",
+      "path": "scrapers/ca_on_caledon",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Burnaby, BC",
+      "directory": "ca_bc_burnaby",
+      "path": "scrapers/ca_bc_burnaby",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Pickering, ON",
+      "directory": "ca_on_pickering",
+      "path": "scrapers/ca_on_pickering",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Stratford, PE",
+      "directory": "ca_pe_stratford",
+      "path": "scrapers/ca_pe_stratford",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Laval, QC",
+      "directory": "ca_qc_laval",
+      "path": "scrapers/ca_qc_laval",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Haldimand County, ON",
+      "directory": "ca_on_haldimand_county",
+      "path": "scrapers/ca_on_haldimand_county",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Oakville, ON",
+      "directory": "ca_on_oakville",
+      "path": "scrapers/ca_on_oakville",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Grande Prairie County No 1, AB",
+      "directory": "ca_ab_grande_prairie_county_no_1",
+      "path": "scrapers/ca_ab_grande_prairie_county_no_1",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Dollard Des Ormeaux, QC",
+      "directory": "ca_qc_dollard_des_ormeaux",
+      "path": "scrapers/ca_qc_dollard_des_ormeaux",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Sainte Anne De Bellevue, QC",
+      "directory": "ca_qc_sainte_anne_de_bellevue",
+      "path": "scrapers/ca_qc_sainte_anne_de_bellevue",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Victoria, BC",
+      "directory": "ca_bc_victoria",
+      "path": "scrapers/ca_bc_victoria",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Coquitlam, BC",
+      "directory": "ca_bc_coquitlam",
+      "path": "scrapers/ca_bc_coquitlam",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Peel, ON",
+      "directory": "ca_on_peel",
+      "path": "scrapers/ca_on_peel",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Levis, QC",
+      "directory": "ca_qc_levis",
+      "path": "scrapers/ca_qc_levis",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Newmarket, ON",
+      "directory": "ca_on_newmarket",
+      "path": "scrapers/ca_on_newmarket",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Kitchener, ON",
+      "directory": "ca_on_kitchener",
+      "path": "scrapers/ca_on_kitchener",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Waterloo Region, ON",
+      "directory": "ca_on_waterloo_region",
+      "path": "scrapers/ca_on_waterloo_region",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Sherbrooke, QC",
+      "directory": "ca_qc_sherbrooke",
+      "path": "scrapers/ca_qc_sherbrooke",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Niagara, ON",
+      "directory": "ca_on_niagara",
+      "path": "scrapers/ca_on_niagara",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Langley City, BC",
+      "directory": "ca_bc_langley_city",
+      "path": "scrapers/ca_bc_langley_city",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Halifax, NS",
+      "directory": "ca_ns_halifax",
+      "path": "scrapers/ca_ns_halifax",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Terrebonne, QC",
+      "directory": "ca_qc_terrebonne",
+      "path": "scrapers/ca_qc_terrebonne",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Clarington, ON",
+      "directory": "ca_on_clarington",
+      "path": "scrapers/ca_on_clarington",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "St Catharines, ON",
+      "directory": "ca_on_st_catharines",
+      "path": "scrapers/ca_on_st_catharines",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Fort Erie, ON",
+      "directory": "ca_on_fort_erie",
+      "path": "scrapers/ca_on_fort_erie",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Huron, ON",
+      "directory": "ca_on_huron",
+      "path": "scrapers/ca_on_huron",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Guelph, ON",
+      "directory": "ca_on_guelph",
+      "path": "scrapers/ca_on_guelph",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "King, ON",
+      "directory": "ca_on_king",
+      "path": "scrapers/ca_on_king",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Brossard, QC",
+      "directory": "ca_qc_brossard",
+      "path": "scrapers/ca_qc_brossard",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Windsor, ON",
+      "directory": "ca_on_windsor",
+      "path": "scrapers/ca_on_windsor",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Niagara On The Lake, ON",
+      "directory": "ca_on_niagara_on_the_lake",
+      "path": "scrapers/ca_on_niagara_on_the_lake",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Belleville, ON",
+      "directory": "ca_on_belleville",
+      "path": "scrapers/ca_on_belleville",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Westmount, QC",
+      "directory": "ca_qc_westmount",
+      "path": "scrapers/ca_qc_westmount",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Longueuil, QC",
+      "directory": "ca_qc_longueuil",
+      "path": "scrapers/ca_qc_longueuil",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saguenay, QC",
+      "directory": "ca_qc_saguenay",
+      "path": "scrapers/ca_qc_saguenay",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Vaughan, ON",
+      "directory": "ca_on_vaughan",
+      "path": "scrapers/ca_on_vaughan",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Whitchurch Stouffville, ON",
+      "directory": "ca_on_whitchurch_stouffville",
+      "path": "scrapers/ca_on_whitchurch_stouffville",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Brampton, ON",
+      "directory": "ca_on_brampton",
+      "path": "scrapers/ca_on_brampton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Grande Prairie, AB",
+      "directory": "ca_ab_grande_prairie",
+      "path": "scrapers/ca_ab_grande_prairie",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Kirkland, QC",
+      "directory": "ca_qc_kirkland",
+      "path": "scrapers/ca_qc_kirkland",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Lethbridge, AB",
+      "directory": "ca_ab_lethbridge",
+      "path": "scrapers/ca_ab_lethbridge",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Edmonton, AB",
+      "directory": "ca_ab_edmonton",
+      "path": "scrapers/ca_ab_edmonton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saint Jean Sur Richelieu, QC",
+      "directory": "ca_qc_saint_jean_sur_richelieu",
+      "path": "scrapers/ca_qc_saint_jean_sur_richelieu",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Mississauga, ON",
+      "directory": "ca_on_mississauga",
+      "path": "scrapers/ca_on_mississauga",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Lincoln, ON",
+      "directory": "ca_on_lincoln",
+      "path": "scrapers/ca_on_lincoln",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Kingston, ON",
+      "directory": "ca_on_kingston",
+      "path": "scrapers/ca_on_kingston",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Calgary, AB",
+      "directory": "ca_ab_calgary",
+      "path": "scrapers/ca_ab_calgary",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Milton, ON",
+      "directory": "ca_on_milton",
+      "path": "scrapers/ca_on_milton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Sault Ste Marie, ON",
+      "directory": "ca_on_sault_ste_marie",
+      "path": "scrapers/ca_on_sault_ste_marie",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Cape Breton, NS",
+      "directory": "ca_ns_cape_breton",
+      "path": "scrapers/ca_ns_cape_breton",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Wood Buffalo, AB",
+      "directory": "ca_ab_wood_buffalo",
+      "path": "scrapers/ca_ab_wood_buffalo",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Pointe Claire, QC",
+      "directory": "ca_qc_pointe_claire",
+      "path": "scrapers/ca_qc_pointe_claire",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Georgina, ON",
+      "directory": "ca_on_georgina",
+      "path": "scrapers/ca_on_georgina",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saskatoon, SK",
+      "directory": "ca_sk_saskatoon",
+      "path": "scrapers/ca_sk_saskatoon",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Vancouver, BC",
+      "directory": "ca_bc_vancouver",
+      "path": "scrapers/ca_bc_vancouver",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Greater Sudbury, ON",
+      "directory": "ca_on_greater_sudbury",
+      "path": "scrapers/ca_on_greater_sudbury",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Whitby, ON",
+      "directory": "ca_on_whitby",
+      "path": "scrapers/ca_on_whitby",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Abbotsford, BC",
+      "directory": "ca_bc_abbotsford",
+      "path": "scrapers/ca_bc_abbotsford",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saint Jerome, QC",
+      "directory": "ca_qc_saint_jerome",
+      "path": "scrapers/ca_qc_saint_jerome",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Charlottetown, PE",
+      "directory": "ca_pe_charlottetown",
+      "path": "scrapers/ca_pe_charlottetown",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Richmond Hill, ON",
+      "directory": "ca_on_richmond_hill",
+      "path": "scrapers/ca_on_richmond_hill",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Regina, SK",
+      "directory": "ca_sk_regina",
+      "path": "scrapers/ca_sk_regina",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Thunder Bay, ON",
+      "directory": "ca_on_thunder_bay",
+      "path": "scrapers/ca_on_thunder_bay",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Senneville, QC",
+      "directory": "ca_qc_senneville",
+      "path": "scrapers/ca_qc_senneville",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Lasalle, ON",
+      "directory": "ca_on_lasalle",
+      "path": "scrapers/ca_on_lasalle",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Wellesley, ON",
+      "directory": "ca_on_wellesley",
+      "path": "scrapers/ca_on_wellesley",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Trois Rivieres, QC",
+      "directory": "ca_qc_trois_rivieres",
+      "path": "scrapers/ca_qc_trois_rivieres",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Strathcona County, AB",
+      "directory": "ca_ab_strathcona_county",
+      "path": "scrapers/ca_ab_strathcona_county",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Burlington, ON",
+      "directory": "ca_on_burlington",
+      "path": "scrapers/ca_on_burlington",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Montreal, QC",
+      "directory": "ca_qc_montreal",
+      "path": "scrapers/ca_qc_montreal",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Mercier, QC",
+      "directory": "ca_qc_mercier",
+      "path": "scrapers/ca_qc_mercier",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Langley, BC",
+      "directory": "ca_bc_langley",
+      "path": "scrapers/ca_bc_langley",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Summerside, PE",
+      "directory": "ca_pe_summerside",
+      "path": "scrapers/ca_pe_summerside",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Welland, ON",
+      "directory": "ca_on_welland",
+      "path": "scrapers/ca_on_welland",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Saanich, BC",
+      "directory": "ca_bc_saanich",
+      "path": "scrapers/ca_bc_saanich",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Woolwich, ON",
+      "directory": "ca_on_woolwich",
+      "path": "scrapers/ca_on_woolwich",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Markham, ON",
+      "directory": "ca_on_markham",
+      "path": "scrapers/ca_on_markham",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Uxbridge, ON",
+      "directory": "ca_on_uxbridge",
+      "path": "scrapers/ca_on_uxbridge",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "North Dumfries, ON",
+      "directory": "ca_on_north_dumfries",
+      "path": "scrapers/ca_on_north_dumfries",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Montreal Est, QC",
+      "directory": "ca_qc_montreal_est",
+      "path": "scrapers/ca_qc_montreal_est",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Dorval, QC",
+      "directory": "ca_qc_dorval",
+      "path": "scrapers/ca_qc_dorval",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Chatham Kent, ON",
+      "directory": "ca_on_chatham_kent",
+      "path": "scrapers/ca_on_chatham_kent",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Oshawa, ON",
+      "directory": "ca_on_oshawa",
+      "path": "scrapers/ca_on_oshawa",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Ottawa, ON",
+      "directory": "ca_on_ottawa",
+      "path": "scrapers/ca_on_ottawa",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Gatineau, QC",
+      "directory": "ca_qc_gatineau",
+      "path": "scrapers/ca_qc_gatineau",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Beaconsfield, QC",
+      "directory": "ca_qc_beaconsfield",
+      "path": "scrapers/ca_qc_beaconsfield",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Grimsby, ON",
+      "directory": "ca_on_grimsby",
+      "path": "scrapers/ca_on_grimsby",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Quebec, QC",
+      "directory": "ca_qc_quebec",
+      "path": "scrapers/ca_qc_quebec",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Brantford, ON",
+      "directory": "ca_on_brantford",
+      "path": "scrapers/ca_on_brantford",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Wilmot, ON",
+      "directory": "ca_on_wilmot",
+      "path": "scrapers/ca_on_wilmot",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "Cote Saint Luc, QC",
+      "directory": "ca_qc_cote_saint_luc",
+      "path": "scrapers/ca_qc_cote_saint_luc",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "St John S, NL",
+      "directory": "ca_nl_st_john_s",
+      "path": "scrapers/ca_nl_st_john_s",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    }
+  ],
+  "disabled": [
+    {
+      "name": "ca_mb_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_mb_municipalities",
+      "path": "scrapers/disabled/ca_mb_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_nb_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_nb_municipalities",
+      "path": "scrapers/disabled/ca_nb_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_candidates (Disabled)",
+      "directory": "scrapers/disabled/ca_candidates",
+      "path": "scrapers/disabled/ca_candidates",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_yt_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_yt_municipalities",
+      "path": "scrapers/disabled/ca_yt_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_municipalities",
+      "path": "scrapers/disabled/ca_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_ab_candidates (Disabled)",
+      "directory": "scrapers/disabled/ca_ab_candidates",
+      "path": "scrapers/disabled/ca_ab_candidates",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_bc_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_bc_municipalities",
+      "path": "scrapers/disabled/ca_bc_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_nl_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_nl_municipalities",
+      "path": "scrapers/disabled/ca_nl_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_sk_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_sk_municipalities",
+      "path": "scrapers/disabled/ca_sk_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_bc_municipalities_candidates (Disabled)",
+      "directory": "scrapers/disabled/ca_bc_municipalities_candidates",
+      "path": "scrapers/disabled/ca_bc_municipalities_candidates",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_mb_candidates (Disabled)",
+      "directory": "scrapers/disabled/ca_mb_candidates",
+      "path": "scrapers/disabled/ca_mb_candidates",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_pe_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_pe_municipalities",
+      "path": "scrapers/disabled/ca_pe_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_nt_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_nt_municipalities",
+      "path": "scrapers/disabled/ca_nt_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    },
+    {
+      "name": "ca_ns_municipalities (Disabled)",
+      "directory": "scrapers/disabled/ca_ns_municipalities",
+      "path": "scrapers/disabled/ca_ns_municipalities",
+      "files": [
+        "people.py",
+        "__init__.py"
+      ]
+    }
+  ]
+}
