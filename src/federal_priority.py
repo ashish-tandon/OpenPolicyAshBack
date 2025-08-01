@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from dataclasses import dataclass
 import re
 
-from .database import Bill, Jurisdiction, JurisdictionType, BillStatus
-from .database import get_session_factory, get_database_config, create_engine_from_config
+from database import Bill, Jurisdiction, JurisdictionType, BillStatus
+from database import get_session_factory, get_database_config, create_engine_from_config
 
 logger = logging.getLogger(__name__)
 

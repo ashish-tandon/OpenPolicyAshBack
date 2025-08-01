@@ -9,8 +9,8 @@ from pydantic import BaseModel
 import uuid
 from datetime import datetime
 
-from ..database import get_session_factory, get_database_config, create_engine_from_config
-from ..scheduler.tasks import (
+from database import get_session_factory, get_database_config, create_engine_from_config
+from scheduler.tasks import (
     run_test_scrapers, run_federal_scrapers, 
     run_provincial_scrapers, run_municipal_scrapers
 )
@@ -18,11 +18,11 @@ from ..scheduler.tasks import (
 # Database setup
 config = get_database_config()
 engine = create_engine_from_config(config.get_url())
-SessionLocal = get_session_factory(engine)
+Session_factory = get_session_factory(engine)
 
 def get_db():
     """Database dependency"""
-    db = SessionLocal()
+    db = Session_factory()
     try:
         yield db
     finally:
@@ -89,7 +89,7 @@ async def get_task_status(task_id: str):
     """Get the status of a specific task"""
     try:
         from celery.result import AsyncResult
-        from ..scheduler.tasks import celery_app
+        from scheduler.tasks import celery_app
         
         result = AsyncResult(task_id, app=celery_app)
         
@@ -113,7 +113,7 @@ async def cancel_task(task_id: str):
     """Cancel a running task"""
     try:
         from celery.result import AsyncResult
-        from ..scheduler.tasks import celery_app
+        from scheduler.tasks import celery_app
         
         result = AsyncResult(task_id, app=celery_app)
         result.revoke(terminate=True)

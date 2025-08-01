@@ -25,5 +25,8 @@ RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
+# Set Python path to include src directory
+ENV PYTHONPATH=/app/src:/app
+
 # Run the Celery beat scheduler
-CMD ["python", "-m", "celery", "beat", "-A", "src.scheduler.tasks", "--loglevel=info"]
+CMD ["python", "-m", "celery", "beat", "-A", "scheduler.tasks", "--loglevel=info"]

@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 import asyncio
 import json
 
-from .database import Bill, Jurisdiction, JurisdictionType
-from .database import get_session_factory, get_database_config, create_engine_from_config
+from database import Bill, Jurisdiction, JurisdictionType
+from database import get_session_factory, get_database_config, create_engine_from_config
 
 logger = logging.getLogger(__name__)
 
