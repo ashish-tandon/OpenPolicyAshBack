@@ -1,0 +1,17 @@
+FROM python:3.13-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install Flower
+RUN pip install --no-cache-dir flower==2.0.1
+
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser
+USER appuser
+
+# Expose port
+EXPOSE 5555
+
+# Run Flower
+CMD ["python", "-m", "flower", "--broker=$CELERY_BROKER_URL", "--port=5555"]
