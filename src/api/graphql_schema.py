@@ -166,6 +166,13 @@ class PaginationInput:
     limit: int = 100
     offset: int = 0
 
+@strawberry.type
+class SearchResultType:
+    jurisdictions: List[JurisdictionType_GQL]
+    representatives: List[RepresentativeType_GQL]
+    bills: List[BillType_GQL]
+    committees: List[CommitteeType_GQL]
+
 # Resolvers
 @strawberry.type
 class Query:
@@ -431,23 +438,23 @@ class Query:
         self, 
         query: str, 
         pagination: Optional[PaginationInput] = None
-    ) -> Dict[str, Any]:
+    ) -> SearchResultType:
         """Universal search across all entities"""
         db = get_db()
         try:
-            results = {
-                "jurisdictions": [],
-                "representatives": [],
-                "bills": [],
-                "committees": []
-            }
+            results = SearchResultType(
+                jurisdictions=[],
+                representatives=[],
+                bills=[],
+                committees=[]
+            )
             
             # Search jurisdictions
             jurisdictions = db.query(Jurisdiction).filter(
                 Jurisdiction.name.ilike(f"%{query}%")
             ).limit(10).all()
             
-            results["jurisdictions"] = [JurisdictionType_GQL(
+            results.jurisdictions = [JurisdictionType_GQL(
                 id=j.id,
                 name=j.name,
                 jurisdiction_type=j.jurisdiction_type.value,
@@ -463,7 +470,7 @@ class Query:
                 Representative.name.ilike(f"%{query}%")
             ).limit(10).all()
             
-            results["representatives"] = [RepresentativeType_GQL(
+            results.representatives = [RepresentativeType_GQL(
                 id=r.id,
                 name=r.name,
                 role=r.role.value if hasattr(r.role, 'value') else r.role,
@@ -483,7 +490,7 @@ class Query:
                 (Bill.identifier.ilike(f"%{query}%"))
             ).limit(10).all()
             
-            results["bills"] = [BillType_GQL(
+            results.bills = [BillType_GQL(
                 id=b.id,
                 identifier=b.identifier,
                 title=b.title,
@@ -493,6 +500,21 @@ class Query:
                 created_at=b.created_at,
                 updated_at=b.updated_at
             ) for b in bills]
+            
+            # Search committees
+            committees = db.query(Committee).filter(
+                Committee.name.ilike(f"%{query}%")
+            ).limit(10).all()
+            
+            results.committees = [CommitteeType_GQL(
+                id=c.id,
+                name=c.name,
+                committee_type=c.committee_type.value if hasattr(c.committee_type, 'value') else c.committee_type,
+                description=c.description,
+                jurisdiction_id=c.jurisdiction_id,
+                created_at=c.created_at,
+                updated_at=c.updated_at
+            ) for c in committees]
             
             return results
             
