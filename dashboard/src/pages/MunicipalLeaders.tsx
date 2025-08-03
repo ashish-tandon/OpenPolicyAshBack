@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { representativesApi, billsApi, jurisdictionsApi } from '../lib/api'
 import { Representative, Bill, Jurisdiction } from '../lib/api'
-import { Search, User, Building, FileText, MapPin, Users, Briefcase } from 'lucide-react'
+import { Search, User, Building, FileText, Users, Briefcase } from 'lucide-react'
 
 interface LeaderWithStats extends Representative {
   bylaws_count?: number
   recent_bylaws?: Bill[]
+  photo_url?: string
 }
 
 const MAJOR_CITIES = [
@@ -52,20 +53,17 @@ export default function MunicipalLeaders() {
       
       // Get municipal jurisdictions
       const munis = await jurisdictionsApi.getJurisdictions({
-        jurisdiction_type: 'municipal',
         limit: 100
       })
       setMunicipalities(munis)
 
       // Get municipal leaders
       const leaderData = await representativesApi.getRepresentatives({
-        jurisdiction_type: 'municipal',
         limit: 200
       })
 
       // Get municipal bylaws/bills
       const municipalBylaws = await billsApi.getBills({
-        jurisdiction_type: 'municipal',
         limit: 50
       })
       setBylaws(municipalBylaws)

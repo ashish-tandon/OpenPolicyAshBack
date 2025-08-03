@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { representativesApi, billsApi } from '../lib/api'
 import { Representative, Bill } from '../lib/api'
-import { Search, User, Building, FileText, ThumbsUp, Users, Filter } from 'lucide-react'
+import { Search, User, Building, FileText, Users } from 'lucide-react'
 
 interface MPWithStats extends Representative {
   bills_count?: number
   votes_count?: number
   committees_count?: number
   recent_bills?: Bill[]
+  photo_url?: string
 }
 
 export default function FederalMPs() {
@@ -40,8 +41,8 @@ export default function FederalMPs() {
       })
 
       // Extract unique parties and provinces
-      const uniqueParties = [...new Set(mpData.map(mp => mp.party).filter(Boolean))]
-      const uniqueProvinces = [...new Set(mpData.map(mp => mp.jurisdiction?.province).filter(Boolean))]
+      const uniqueParties = [...new Set(mpData.map(mp => mp.party).filter(Boolean))] as string[]
+      const uniqueProvinces = [...new Set(mpData.map(mp => mp.jurisdiction?.province).filter(Boolean))] as string[]
       
       setParties(uniqueParties.sort())
       setProvinces(uniqueProvinces.sort())

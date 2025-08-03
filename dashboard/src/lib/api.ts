@@ -1,7 +1,16 @@
 import axios from 'axios'
 
-const api = axios.create({
-  baseURL: '/api',
+// Use environment variable for API URL with fallback to localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Ensure we have the /api prefix for relative URLs
+const API_BASE = API_URL.startsWith('http') ? API_URL : `${API_URL}/api`
+
+export const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
   timeout: 30000,
 })
 

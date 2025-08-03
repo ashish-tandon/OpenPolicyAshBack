@@ -1,13 +1,17 @@
-import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'react-hot-toast'
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
-  PlayIcon, 
-  StopIcon, 
   ClockIcon, 
-  ExclamationTriangleIcon 
+  PlayIcon, 
+  PauseIcon,
+  ArrowPathIcon,
+  PlusIcon,
+  TrashIcon,
+  StopIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
-import { schedulingApi, type ScrapingRun } from '../lib/api'
+import { schedulingApi } from '../lib/api'
+import { toast } from 'react-hot-toast'
 
 export default function Scheduling() {
   const [selectedTaskType, setSelectedTaskType] = useState<'test' | 'federal' | 'provincial' | 'municipal'>('test')

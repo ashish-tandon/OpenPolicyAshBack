@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   HomeIcon, 
-  DatabaseIcon, 
+  CircleStackIcon, 
   CogIcon,
   ClockIcon,
   EyeIcon,
@@ -23,7 +23,7 @@ const navigation = [
   { name: 'Federal MPs', href: '/federal-mps', icon: UserGroupIcon },
   { name: 'Provincial MPPs', href: '/provincial-mpps', icon: UserGroupIcon },
   { name: 'Municipal Leaders', href: '/municipal-leaders', icon: BuildingOfficeIcon },
-  { name: 'Database', href: '/database', icon: DatabaseIcon },
+  { name: 'Database', href: '/database', icon: CircleStackIcon },
   { name: 'Parliamentary', href: '/parliamentary', icon: BuildingLibraryIcon },
   { name: 'Scrapers', href: '/scrapers', icon: PlayIcon },
   { name: 'Scheduling', href: '/scheduling', icon: ClockIcon },

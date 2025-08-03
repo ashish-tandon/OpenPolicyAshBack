@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Key, Users, Shield, Activity, Database, Server } from 'lucide-react'
-import api from '../lib/api'
+import { Key, Shield, Users, Server, Database, Activity } from 'lucide-react'
+import { api } from '../lib/api'
 
 interface ApiKey {
   id: string

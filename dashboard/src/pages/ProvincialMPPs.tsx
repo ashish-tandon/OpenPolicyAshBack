@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { representativesApi, billsApi, jurisdictionsApi } from '../lib/api'
-import { Representative, Bill, Jurisdiction } from '../lib/api'
-import { Search, User, Building, FileText, MapPin, Filter } from 'lucide-react'
+import { representativesApi, billsApi } from '../lib/api'
+import { Representative, Bill } from '../lib/api'
+import { Search, User, Building, FileText, MapPin } from 'lucide-react'
 
 interface MPPWithStats extends Representative {
   bills_count?: number
   recent_bills?: Bill[]
+  photo_url?: string
 }
 
 const PROVINCES = [
@@ -48,20 +49,18 @@ export default function ProvincialMPPs() {
       
       // Get provincial representatives for selected province
       const mppData = await representativesApi.getRepresentatives({
-        jurisdiction_type: 'provincial',
         province: selectedProvince,
         limit: 200
       })
 
       // Get provincial bills
       const bills = await billsApi.getBills({
-        jurisdiction_type: 'provincial',
         limit: 50
       })
       setProvincialBills(bills)
 
       // Extract unique parties
-      const uniqueParties = [...new Set(mppData.map(mpp => mpp.party).filter(Boolean))]
+      const uniqueParties = [...new Set(mppData.map(mpp => mpp.party).filter(Boolean))] as string[]
       setParties(uniqueParties.sort())
 
       // Add bill counts (in real app, this would be optimized)

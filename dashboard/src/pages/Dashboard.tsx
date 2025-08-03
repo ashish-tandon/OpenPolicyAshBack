@@ -19,7 +19,12 @@ import {
 } from '@heroicons/react/24/outline'
 import { statsApi, jurisdictionsApi, representativesApi, billsApi } from '../lib/api'
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const SAMPLE_DATA = [
+  { name: 'Federal Bills', value: 156 },
+  { name: 'Provincial Bills', value: 423 },
+  { name: 'Municipal Bylaws', value: 287 },
+  { name: 'Committee Reports', value: 94 },
+]
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({

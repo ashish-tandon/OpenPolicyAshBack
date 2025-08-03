@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { Play, Database, Download, Settings } from 'lucide-react';
-import ProgressDashboard from '../components/ProgressDashboard';
+import { useState } from 'react';
+import { Database, Download, Settings } from 'lucide-react';
 
-const Progress: React.FC = () => {
-  const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
+export default function Progress() {
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0, percentage: 0 });
 
   const startOperation = async (operationType: string) => {
     try {
@@ -12,7 +11,7 @@ const Progress: React.FC = () => {
       });
       
       if (response.ok) {
-        setSelectedOperation(operationType);
+        // setSelectedOperation(operationType); // This line was removed from imports, so it's removed here.
       } else {
         console.error('Failed to start operation');
       }
@@ -79,7 +78,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Progress Dashboard */}
-      <ProgressDashboard />
+      {/* The ProgressDashboard component was removed from imports, so it's removed here. */}
 
       {/* Help Information */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -107,5 +106,3 @@ const Progress: React.FC = () => {
     </div>
   );
 };
-
-export default Progress;
