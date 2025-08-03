@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Play, Database, Download, Settings } from 'lucide-react';
+import { Database, Download, Settings } from 'lucide-react';
 import ProgressDashboard from '../components/ProgressDashboard';
 
 const Progress: React.FC = () => {
-  const [selectedOperation, setSelectedOperation] = useState<string | null>(null);
+  const [, setSelectedOperation] = useState<string | null>(null);
 
   const startOperation = async (operationType: string) => {
     try {

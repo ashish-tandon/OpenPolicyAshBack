@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   HomeIcon, 
-  DatabaseIcon, 
   CogIcon,
   ClockIcon,
   EyeIcon,
@@ -11,12 +10,13 @@ import {
   XMarkIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline'
+import { Database } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { healthApi } from '../lib/api'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Database', href: '/database', icon: DatabaseIcon },
+  { name: 'Database', href: '/database', icon: Database },
   { name: 'Scrapers', href: '/scrapers', icon: PlayIcon },
   { name: 'Scheduling', href: '/scheduling', icon: ClockIcon },
   { name: 'Progress', href: '/progress', icon: ChartBarIcon },

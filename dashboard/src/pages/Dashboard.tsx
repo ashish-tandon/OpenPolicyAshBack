@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { statsApi, jurisdictionsApi, representativesApi, billsApi } from '../lib/api'
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+// Color palette for charts
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
