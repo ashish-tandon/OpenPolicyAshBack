@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17
+    container_name: openpolicy_postgres
+    environment:
+      POSTGRES_DB: opencivicdata
+      POSTGRES_USER: openpolicy
+      POSTGRES_PASSWORD: openpolicy123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - /share/Container/openpolicy/postgres_data:/var/lib/postgresql/data
+      - /share/Container/openpolicy/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - openpolicy_network
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: openpolicy_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /share/Container/openpolicy/redis_data:/data
+    restart: unless-stopped
+    networks:
+      - openpolicy_network
+
+  # OpenPolicy Database API
+  api:
+    image: ashishtandon9/openpolicyashback:latest
+    container_name: openpolicy_api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: opencivicdata
+      DB_USER: openpolicy
+      DB_PASSWORD: openpolicy123
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: "http://192.168.2.152:3000,http://localhost:3000,https://dashboard-h1ilgrlf8-ashish-tandons-projects.vercel.app"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /share/Container/openpolicy/regions_report.json:/app/regions_report.json:ro
+      - /share/Container/openpolicy/scrapers:/app/scrapers:ro
+    restart: unless-stopped
+    networks:
+      - openpolicy_network
+
+  # Celery Worker
+  celery_worker:
+    image: ashishtandon9/openpolicyashback:latest
+    container_name: openpolicy_worker
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: opencivicdata
+      DB_USER: openpolicy
+      DB_PASSWORD: openpolicy123
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /share/Container/openpolicy/regions_report.json:/app/regions_report.json:ro
+      - /share/Container/openpolicy/scrapers:/app/scrapers:ro
+    restart: unless-stopped
+    command: ["celery", "-A", "src.scheduler.tasks", "worker", "--loglevel=info"]
+    networks:
+      - openpolicy_network
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    image: ashishtandon9/openpolicyashback:latest
+    container_name: openpolicy_beat
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: opencivicdata
+      DB_USER: openpolicy
+      DB_PASSWORD: openpolicy123
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /share/Container/openpolicy/regions_report.json:/app/regions_report.json:ro
+      - /share/Container/openpolicy/scrapers:/app/scrapers:ro
+    restart: unless-stopped
+    command: ["celery", "-A", "src.scheduler.tasks", "beat", "--loglevel=info"]
+    networks:
+      - openpolicy_network
+
+  # Celery Flower (Monitoring)
+  flower:
+    image: mher/flower:2.0
+    container_name: openpolicy_flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - openpolicy_network
+
+networks:
+  openpolicy_network:
+    driver: bridge

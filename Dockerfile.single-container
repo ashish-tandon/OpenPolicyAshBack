@@ -1,0 +1,173 @@
+# Single Container OpenPolicy System
+# Includes PostgreSQL, Redis, FastAPI, Celery, Dashboard, and Nginx
+
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    postgresql \
+    redis-server \
+    curl \
+    nginx \
+    supervisor \
+    nodejs \
+    npm \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV POSTGRES_DB=opencivicdata
+ENV POSTGRES_USER=openpolicy
+ENV POSTGRES_PASSWORD=openpolicy123
+ENV DATABASE_URL=postgresql://openpolicy:openpolicy123@localhost:5432/opencivicdata
+ENV REDIS_URL=redis://localhost:6379/0
+ENV NODE_ENV=production
+
+# Create app directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY scrapers/ ./scrapers/
+COPY regions_report.json .
+COPY policies/ ./policies/
+
+# Copy dashboard and build it
+COPY dashboard/ ./dashboard/
+WORKDIR /app/dashboard
+RUN npm ci --only=production && npm run build
+WORKDIR /app
+
+# Create necessary directories
+RUN mkdir -p /var/lib/postgresql/data /var/log/postgresql /var/log/redis /var/log/supervisor /var/log/nginx
+
+# Copy configuration files
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Initialize PostgreSQL
+RUN su - postgres -c "initdb -D /var/lib/postgresql/data" && \
+    echo "host all all 0.0.0.0/0 md5" >> /var/lib/postgresql/data/pg_hba.conf && \
+    echo "listen_addresses='*'" >> /var/lib/postgresql/data/postgresql.conf && \
+    echo "max_connections=100" >> /var/lib/postgresql/data/postgresql.conf && \
+    echo "shared_buffers=128MB" >> /var/lib/postgresql/data/postgresql.conf
+
+# Create startup script with better error handling
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "🚀 Starting OpenPolicy Single Container System..."\n\
+echo "📅 $(date)"\n\
+\n\
+# Function to check if a service is ready\n\
+wait_for_service() {\n\
+    local service_name=$1\n\
+    local check_command=$2\n\
+    local max_attempts=30\n\
+    local attempt=1\n\
+    \n\
+    echo "⏳ Waiting for $service_name to be ready..."\n\
+    while [ $attempt -le $max_attempts ]; do\n\
+        if eval "$check_command" >/dev/null 2>&1; then\n\
+            echo "✅ $service_name is ready"\n\
+            return 0\n\
+        fi\n\
+        echo "   Attempt $attempt/$max_attempts - $service_name not ready yet..."\n\
+        sleep 2\n\
+        attempt=$((attempt + 1))\n\
+    done\n\
+    echo "❌ $service_name failed to start after $max_attempts attempts"\n\
+    return 1\n\
+}\n\
+\n\
+# Start PostgreSQL\n\
+echo "📊 Starting PostgreSQL..."\n\
+su - postgres -c "pg_ctl -D /var/lib/postgresql/data -l /var/log/postgresql/postgresql.log start" || {\n\
+    echo "❌ Failed to start PostgreSQL"\n\
+    exit 1\n\
+}\n\
+\n\
+# Wait for PostgreSQL\n\
+wait_for_service "PostgreSQL" "su - postgres -c \"pg_isready -U openpolicy -d opencivicdata\"" || exit 1\n\
+\n\
+# Create database and user\n\
+echo "🗄️ Setting up database..."\n\
+su - postgres -c "createdb -U postgres opencivicdata 2>/dev/null || true"\n\
+su - postgres -c "psql -U postgres -c \"CREATE USER openpolicy WITH PASSWORD '\''openpolicy123'\'';\" 2>/dev/null || true"\n\
+su - postgres -c "psql -U postgres -c \"GRANT ALL PRIVILEGES ON DATABASE opencivicdata TO openpolicy;\" 2>/dev/null || true"\n\
+\n\
+# Initialize database schema\n\
+echo "📝 Initializing database schema..."\n\
+python -c "from src.database.models import Base; from src.database.config import engine; Base.metadata.create_all(bind=engine); print(\"Database schema created\")" || {\n\
+    echo "❌ Failed to initialize database schema"\n\
+    exit 1\n\
+}\n\
+\n\
+# Start Redis\n\
+echo "🔴 Starting Redis..."\n\
+redis-server --daemonize yes || {\n\
+    echo "❌ Failed to start Redis"\n\
+    exit 1\n\
+}\n\
+\n\
+# Wait for Redis\n\
+wait_for_service "Redis" "redis-cli ping" || exit 1\n\
+\n\
+# Test API startup\n\
+echo "🧪 Testing API startup..."\n\
+timeout 10s python -c "import uvicorn; from src.api.main import app; print(\"API imports successful\")" || {\n\
+    echo "❌ API startup test failed"\n\
+    exit 1\n\
+}\n\
+\n\
+echo "🎯 Starting all services with Supervisor..."\n\
+exec supervisord -c /etc/supervisor/conf.d/supervisord.conf\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Create health check script
+RUN echo '#!/bin/bash\n\
+# Health check for the container\n\
+\n\
+# Check if PostgreSQL is running\n\
+if ! su - postgres -c "pg_isready -U openpolicy -d opencivicdata" >/dev/null 2>&1; then\n\
+    echo "PostgreSQL is not ready"\n\
+    exit 1\n\
+fi\n\
+\n\
+# Check if Redis is running\n\
+if ! redis-cli ping >/dev/null 2>&1; then\n\
+    echo "Redis is not ready"\n\
+    exit 1\n\
+fi\n\
+\n\
+# Check if API is responding\n\
+if ! curl -f http://localhost:8000/health >/dev/null 2>&1; then\n\
+    echo "API is not responding"\n\
+    exit 1\n\
+fi\n\
+\n\
+# Check if Dashboard is responding\n\
+if ! curl -f http://localhost:3000 >/dev/null 2>&1; then\n\
+    echo "Dashboard is not responding"\n\
+    exit 1\n\
+fi\n\
+\n\
+echo "All services are healthy"\n\
+exit 0\n\
+' > /app/healthcheck.sh && chmod +x /app/healthcheck.sh
+
+# Expose ports
+EXPOSE 80 8000 3000 5555 6379 5432
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /app/healthcheck.sh
+
+# Start the system
+CMD ["/app/start.sh"] 

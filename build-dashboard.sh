@@ -1,3 +1,12 @@
+#!/bin/bash
+
+echo "🏗️ Building OpenPolicy Dashboard..."
+
+# Create dashboard directory
+mkdir -p /share/Container/openpolicy/dashboard
+
+# Create a simple dashboard HTML
+cat > /share/Container/openpolicy/dashboard/index.html << 'HTML_EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +18,7 @@
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen">
+        <!-- Header -->
         <header class="bg-white shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -24,8 +34,10 @@
                 </div>
             </div>
         </header>
-        
+
+        <!-- Main Content -->
         <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="p-5">
@@ -46,7 +58,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="p-5">
                         <div class="flex items-center">
@@ -66,7 +78,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="p-5">
                         <div class="flex items-center">
@@ -86,7 +98,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="p-5">
                         <div class="flex items-center">
@@ -107,32 +119,46 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Data Tables -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Jurisdictions -->
                 <div class="bg-white shadow rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">System Status</h3>
-                        <div id="system-status" class="space-y-2">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Jurisdictions</h3>
+                        <div id="jurisdictions-list" class="space-y-2">
                             <div class="text-gray-500 text-sm">Loading...</div>
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Representatives -->
                 <div class="bg-white shadow rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
-                        <div class="space-y-2">
-                            <button onclick="testAPI()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                                Test API Connection
-                            </button>
-                            <button onclick="loadStats()" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-                                Refresh Statistics
-                            </button>
-                            <a href="http://192.168.2.152:5555" target="_blank" class="block w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 text-center">
-                                Open Flower Monitor
-                            </a>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Representatives</h3>
+                        <div id="representatives-list" class="space-y-2">
+                            <div class="text-gray-500 text-sm">Loading...</div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">System Actions</h3>
+                    <div class="flex space-x-4">
+                        <button onclick="startScraping('federal')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">
+                            Start Federal Scraping
+                        </button>
+                        <button onclick="startScraping('provincial')" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md">
+                            Start Provincial Scraping
+                        </button>
+                        <button onclick="startScraping('municipal')" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md">
+                            Start Municipal Scraping
+                        </button>
+                    </div>
+                    <div id="scraping-status" class="mt-4 text-sm text-gray-600"></div>
                 </div>
             </div>
         </main>
@@ -158,8 +184,8 @@
                 return false;
             }
         }
-        
-        // Load statistics
+
+        // Load stats
         async function loadStats() {
             try {
                 const response = await axios.get(`${API_BASE}/stats`);
@@ -169,42 +195,101 @@
                 document.getElementById('representatives-count').textContent = stats.total_representatives || 0;
                 document.getElementById('bills-count').textContent = stats.total_bills || 0;
                 document.getElementById('events-count').textContent = stats.total_events || 0;
-                
-                document.getElementById('system-status').innerHTML = `
-                    <div class="text-green-600">✅ API Connected</div>
-                    <div>Database: Connected</div>
-                    <div>Redis: Connected</div>
-                    <div>Last Updated: ${new Date().toLocaleTimeString()}</div>
-                `;
             } catch (error) {
-                document.getElementById('system-status').innerHTML = `
-                    <div class="text-red-600">❌ API Error</div>
-                    <div>${error.message}</div>
-                `;
+                console.error('Error loading stats:', error);
             }
         }
-        
-        // Test API connection
-        async function testAPI() {
-            const isHealthy = await checkHealth();
-            if (isHealthy) {
-                alert('✅ API is working correctly!');
-            } else {
-                alert('❌ API is not responding');
+
+        // Load jurisdictions
+        async function loadJurisdictions() {
+            try {
+                const response = await axios.get(`${API_BASE}/jurisdictions?limit=5`);
+                const jurisdictions = response.data;
+                
+                const html = jurisdictions.map(j => `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div>
+                            <div class="font-medium text-gray-900">${j.name}</div>
+                            <div class="text-sm text-gray-500">${j.jurisdiction_type}</div>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${j.jurisdiction_type}
+                        </span>
+                    </div>
+                `).join('');
+                
+                document.getElementById('jurisdictions-list').innerHTML = html || '<div class="text-gray-500 text-sm">No jurisdictions found</div>';
+            } catch (error) {
+                document.getElementById('jurisdictions-list').innerHTML = '<div class="text-red-500 text-sm">Error loading jurisdictions</div>';
             }
         }
-        
-        // Initialize dashboard
-        window.onload = function() {
-            checkHealth();
-            loadStats();
+
+        // Load representatives
+        async function loadRepresentatives() {
+            try {
+                const response = await axios.get(`${API_BASE}/representatives?limit=5`);
+                const representatives = response.data;
+                
+                const html = representatives.map(r => `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div>
+                            <div class="font-medium text-gray-900">${r.name}</div>
+                            <div class="text-sm text-gray-500">${r.role} • ${r.party || 'No party'}</div>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ${r.role}
+                        </span>
+                    </div>
+                `).join('');
+                
+                document.getElementById('representatives-list').innerHTML = html || '<div class="text-gray-500 text-sm">No representatives found</div>';
+            } catch (error) {
+                document.getElementById('representatives-list').innerHTML = '<div class="text-red-500 text-sm">Error loading representatives</div>';
+            }
+        }
+
+        // Start scraping
+        async function startScraping(type) {
+            const statusDiv = document.getElementById('scraping-status');
+            statusDiv.innerHTML = `<div class="text-blue-600">Starting ${type} scraping...</div>`;
             
-            // Refresh every 30 seconds
-            setInterval(() => {
-                checkHealth();
-                loadStats();
-            }, 30000);
-        };
+            try {
+                const response = await axios.post(`${API_BASE}/scheduling/schedule`, {
+                    task_type: type
+                });
+                
+                statusDiv.innerHTML = `<div class="text-green-600">${type} scraping started successfully! Task ID: ${response.data.task_id}</div>`;
+                
+                // Refresh data after a delay
+                setTimeout(() => {
+                    loadStats();
+                    loadJurisdictions();
+                    loadRepresentatives();
+                }, 5000);
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="text-red-600">Error starting ${type} scraping: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize dashboard
+        async function initDashboard() {
+            await checkHealth();
+            await loadStats();
+            await loadJurisdictions();
+            await loadRepresentatives();
+        }
+
+        // Load dashboard on page load
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            loadStats();
+        }, 30000);
     </script>
 </body>
 </html>
+HTML_EOF
+
+echo "✅ Dashboard built successfully!"
+echo "📁 Dashboard location: /share/Container/openpolicy/dashboard/"

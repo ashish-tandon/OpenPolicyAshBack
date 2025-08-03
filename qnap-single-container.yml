@@ -1,0 +1,58 @@
+version: '3.8'
+services:
+  openpolicy_all_in_one:
+    image: ashishtandon9/openpolicyashback:latest
+    container_name: openpolicy_all_in_one
+    environment:
+      # Database settings (using SQLite for simplicity)
+      DATABASE_URL: sqlite:///app/data/openpolicy.db
+      # Redis settings (using in-memory for simplicity)
+      REDIS_URL: redis://localhost:6379/0
+      # API settings
+      CORS_ORIGINS: "http://192.168.2.152:3000,http://localhost:3000,http://192.168.2.152:8080"
+      # All-in-one mode
+      ALL_IN_ONE_MODE: "true"
+      # Ports for all services
+      API_PORT: 8000
+      DASHBOARD_PORT: 3000
+      FLOWER_PORT: 5555
+      REDIS_PORT: 6379
+    ports:
+      - "8000:8000"  # API
+      - "3000:3000"  # Dashboard
+      - "5555:5555"  # Flower Monitor
+      - "6379:6379"  # Redis
+    volumes:
+      - /share/Container/openpolicy/data:/app/data
+      - /share/Container/openpolicy/regions_report.json:/app/regions_report.json:ro
+      - /share/Container/openpolicy/scrapers:/app/scrapers:ro
+    restart: unless-stopped
+    networks:
+      - openpolicy_network
+    command: >
+      sh -c "
+        echo '🚀 Starting OpenPolicy All-in-One Container...' &&
+        echo '📊 Starting Redis server...' &&
+        redis-server --daemonize yes &&
+        echo '🗄️ Initializing database...' &&
+        python -c 'from src.database.models import Base; from src.database.config import engine; Base.metadata.create_all(bind=engine)' &&
+        echo '🌐 Starting API server...' &&
+        uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+        echo '📈 Starting Celery worker...' &&
+        celery -A src.scheduler.tasks worker --loglevel=info &
+        echo '⏰ Starting Celery beat...' &&
+        celery -A src.scheduler.tasks beat --loglevel=info &
+        echo '🌸 Starting Flower monitor...' &&
+        celery -A src.scheduler.tasks flower --port=5555 &
+        echo '🎨 Starting Dashboard server...' &&
+        python -m http.server 3000 --directory /app/dashboard &
+        echo '✅ All services started!' &&
+        echo '🌐 API: http://192.168.2.152:8000' &&
+        echo '📊 Dashboard: http://192.168.2.152:3000' &&
+        echo '📈 Flower: http://192.168.2.152:5555' &&
+        tail -f /dev/null
+      "
+
+networks:
+  openpolicy_network:
+    driver: bridge
