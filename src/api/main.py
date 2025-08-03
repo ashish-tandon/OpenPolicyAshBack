@@ -34,6 +34,7 @@ import strawberry
 from strawberry.fastapi import GraphQLRouter
 from api.parliamentary_endpoints import router as parliamentary_router
 from api.policy_middleware import create_policy_middleware
+from api.federal_endpoints import router as federal_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -61,6 +62,9 @@ app.include_router(progress_router, tags=["progress"])
 
 # Include parliamentary router
 app.include_router(parliamentary_router, tags=["parliamentary"])
+
+# Include federal router
+app.include_router(federal_router, tags=["federal"])
 
 # Include phased loading router
 from api.phased_loading_api import router as phased_loading_router

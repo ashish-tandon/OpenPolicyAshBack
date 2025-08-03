@@ -9,6 +9,9 @@ import Settings from './pages/Settings'
 import Progress from './pages/Progress'
 import Parliamentary from './pages/Parliamentary'
 import Admin from './pages/Admin'
+import FederalMPs from './pages/FederalMPs'
+import ProvincialMPPs from './pages/ProvincialMPPs'
+import MunicipalLeaders from './pages/MunicipalLeaders'
 
 function App() {
   return (
@@ -16,6 +19,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/database" element={<Database />} />
+        <Route path="/federal-mps" element={<FederalMPs />} />
+        <Route path="/provincial-mpps" element={<ProvincialMPPs />} />
+        <Route path="/municipal-leaders" element={<MunicipalLeaders />} />
         <Route path="/scrapers" element={<Scrapers />} />
         <Route path="/scheduling" element={<Scheduling />} />
         <Route path="/monitoring" element={<Monitoring />} />

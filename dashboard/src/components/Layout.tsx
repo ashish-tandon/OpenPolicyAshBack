@@ -12,12 +12,17 @@ import {
   ChartBarIcon,
   BuildingLibraryIcon,
   ShieldCheckIcon,
+  UserGroupIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline'
 import { useQuery } from '@tanstack/react-query'
 import { healthApi } from '../lib/api'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Federal MPs', href: '/federal-mps', icon: UserGroupIcon },
+  { name: 'Provincial MPPs', href: '/provincial-mpps', icon: UserGroupIcon },
+  { name: 'Municipal Leaders', href: '/municipal-leaders', icon: BuildingOfficeIcon },
   { name: 'Database', href: '/database', icon: DatabaseIcon },
   { name: 'Parliamentary', href: '/parliamentary', icon: BuildingLibraryIcon },
   { name: 'Scrapers', href: '/scrapers', icon: PlayIcon },
