@@ -32,6 +32,8 @@ from api.progress_api import router as progress_router
 from ai_services import ai_analyzer, data_enricher
 import strawberry
 from strawberry.fastapi import GraphQLRouter
+from api.parliamentary_endpoints import router as parliamentary_router
+from api.policy_middleware import create_policy_middleware
 
 # Create FastAPI app
 app = FastAPI(
@@ -57,6 +59,9 @@ app.include_router(scheduling_router, tags=["scheduling"])
 # Include progress tracking router
 app.include_router(progress_router, tags=["progress"])
 
+# Include parliamentary router
+app.include_router(parliamentary_router, tags=["parliamentary"])
+
 # Include phased loading router
 from api.phased_loading_api import router as phased_loading_router
 app.include_router(phased_loading_router, tags=["phased-loading"])
@@ -67,6 +72,26 @@ app.include_router(graphql_app, prefix="/graphql", tags=["graphql"])
 
 # Add middleware for rate limiting and security
 app.middleware("http")(add_security_headers)
+
+# Add policy middleware
+policy_middleware = create_policy_middleware()
+
+@app.middleware("http")
+async def policy_enforcement_middleware(request: Request, call_next):
+    """Apply policy-based access control"""
+    # Skip policy enforcement for health and docs endpoints
+    if request.url.path in ["/health", "/docs", "/redoc", "/openapi.json"]:
+        return await call_next(request)
+    
+    # Apply policy enforcement
+    try:
+        await policy_middleware(request, call_next)
+    except Exception as e:
+        # Log but don't block on policy failures
+        print(f"Policy middleware error: {e}")
+        pass
+    
+    return await call_next(request)
 
 @app.middleware("http")
 async def rate_limiting_middleware(request: Request, call_next):

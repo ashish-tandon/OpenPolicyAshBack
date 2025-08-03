@@ -81,6 +81,49 @@ export interface TaskStatus {
   traceback?: string
 }
 
+// Parliamentary types
+export interface ParliamentarySession {
+  id: number
+  parliament_number: number
+  session_number: number
+  start_date: string
+  end_date?: string
+  hansard_records_count: number
+  committee_meetings_count: number
+}
+
+export interface HansardRecord {
+  id: number
+  date: string
+  sitting_number?: number
+  document_url?: string
+  pdf_url?: string
+  xml_url?: string
+  processed: boolean
+  speech_count: number
+}
+
+export interface Speech {
+  id: number
+  hansard_id: number
+  speaker_name?: string
+  speaker_title?: string
+  content: string
+  time?: string
+  subject?: string
+  sequence_number: number
+}
+
+export interface ValidationResult {
+  bill_id: string
+  identifier: string
+  title: string
+  quality_score: number
+  is_critical: boolean
+  issues: string[]
+  recommendations: string[]
+}
+
 // API functions
 export const statsApi = {
   getStats: (): Promise<Stats> => api.get('/stats').then(res => res.data),
@@ -141,6 +184,40 @@ export const schedulingApi = {
   
   getRecentRuns: (): Promise<ScrapingRun[]> =>
     api.get('/scraping-runs').then(res => res.data),
+}
+
+// Parliamentary API
+export const parliamentaryApi = {
+  getSessions: (): Promise<ParliamentarySession[]> =>
+    api.get('/parliamentary/sessions').then(res => res.data),
+  
+  getHansardRecords: (params?: {
+    session_id?: number
+    start_date?: string
+    end_date?: string
+    processed?: boolean
+    limit?: number
+    offset?: number
+  }): Promise<HansardRecord[]> => 
+    api.get('/parliamentary/hansard', { params }).then(res => res.data),
+  
+  getSpeeches: (hansardId: number): Promise<Speech[]> =>
+    api.get(`/parliamentary/hansard/${hansardId}/speeches`).then(res => res.data),
+  
+  searchSpeeches: (params: {
+    query: string
+    speaker?: string
+    start_date?: string
+    end_date?: string
+    limit?: number
+  }): Promise<Speech[]> =>
+    api.get('/parliamentary/search/speeches', { params }).then(res => res.data),
+  
+  validateFederalBills: (): Promise<ValidationResult[]> =>
+    api.get('/parliamentary/validation/federal-bills').then(res => res.data),
+  
+  getPolicyHealth: (): Promise<{ status: string; opa_version?: string }> =>
+    api.get('/parliamentary/policy/health').then(res => res.data),
 }
 
 // Health check
