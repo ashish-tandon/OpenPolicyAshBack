@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { 
   MagnifyingGlassIcon, 
-  FunnelIcon,
   ArrowDownTrayIcon,
   EyeIcon 
 } from '@heroicons/react/24/outline'

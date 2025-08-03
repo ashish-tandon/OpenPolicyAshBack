@@ -7,7 +7,7 @@ import {
   ClockIcon, 
   ExclamationTriangleIcon 
 } from '@heroicons/react/24/outline'
-import { schedulingApi, type ScrapingRun } from '../lib/api'
+import { schedulingApi } from '../lib/api'
 
 export default function Scheduling() {
   const [selectedTaskType, setSelectedTaskType] = useState<'test' | 'federal' | 'provincial' | 'municipal'>('test')
