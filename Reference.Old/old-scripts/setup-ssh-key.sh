@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Setup SSH Key for QNAP Server
+echo "🔑 Setting up SSH key authentication for QNAP server..."
+
+QNAP_HOST="192.168.2.152"
+QNAP_USER="ashish101"
+
+echo "📋 Steps to set up SSH key authentication:"
+echo ""
+echo "1. Generate SSH key (if you don't have one):"
+echo "   ssh-keygen -t rsa -b 4096 -C 'ashish101@192.168.2.152'"
+echo ""
+echo "2. Copy your public key to QNAP server:"
+echo "   ssh-copy-id $QNAP_USER@$QNAP_HOST"
+echo ""
+echo "3. Or manually copy the key:"
+echo "   cat ~/.ssh/id_rsa.pub"
+echo "   Then paste this into your QNAP server's authorized_keys file"
+echo ""
+echo "4. Test the connection:"
+echo "   ssh $QNAP_USER@$QNAP_HOST 'echo "SSH key authentication working!"'"
+echo ""
+echo "🔧 Alternative: Manual Setup on QNAP"
+echo "1. SSH into your QNAP server"
+echo "2. Create .ssh directory: mkdir -p ~/.ssh"
+echo "3. Create authorized_keys file: touch ~/.ssh/authorized_keys"
+echo "4. Set permissions: chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+echo "5. Add your public key to ~/.ssh/authorized_keys"
+echo ""
+echo "📤 After setting up SSH key, run:"
+echo "   ./deploy-to-qnap.sh" 

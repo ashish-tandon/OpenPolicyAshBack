@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://192.168.2.152:8000',
   timeout: 30000,
 })
 
@@ -128,22 +128,17 @@ export const billsApi = {
     api.get(`/bills/${id}`).then(res => res.data),
 }
 
-// Scheduling API
 export const schedulingApi = {
-  scheduleTask: (taskType: 'test' | 'federal' | 'provincial' | 'municipal'): Promise<{ task_id: string }> =>
-    api.post('/schedule', { task_type: taskType }).then(res => res.data),
+  scheduleTask: (taskType: 'test' | 'federal' | 'provincial' | 'municipal'): Promise<TaskStatus> =>
+    api.post('/scheduling/schedule', { task_type: taskType }).then(res => res.data),
   
-  getTaskStatus: (taskId: string): Promise<TaskStatus> =>
-    api.get(`/tasks/${taskId}`).then(res => res.data),
-  
-  cancelTask: (taskId: string): Promise<{ success: boolean }> =>
-    api.delete(`/tasks/${taskId}`).then(res => res.data),
+  cancelTask: (taskId: string): Promise<void> =>
+    api.post(`/scheduling/cancel/${taskId}`).then(res => res.data),
   
   getRecentRuns: (): Promise<ScrapingRun[]> =>
-    api.get('/scraping-runs').then(res => res.data),
+    api.get('/scheduling/recent-runs').then(res => res.data),
 }
 
-// Health check
 export const healthApi = {
   getHealth: (): Promise<{ status: string; service: string }> =>
     api.get('/health').then(res => res.data),

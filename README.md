@@ -1,210 +1,297 @@
-# OpenPolicy Backend Ash Aug 2025
+# OpenPolicy Single Container System
 
-A comprehensive, single-command solution for collecting, managing, and analyzing Canadian civic data with a modern architecture.
+A comprehensive Canadian civic data platform that combines PostgreSQL, Redis, FastAPI, Celery, React Dashboard, and monitoring tools in a single Docker container.
 
 ## 🚀 Quick Start
 
-**Get the core system running with one command:**
+### Prerequisites
+- Docker and Docker Compose
+- Git
+- SSH access to QNAP NAS
 
+### One-Command Deployment
 ```bash
-./setup.sh
+./deploy-all.sh
 ```
 
-That's it! The script will:
-- Install Docker automatically if needed
-- Build and start all core services
-- Set up the database with proper schema
-- Configure all dependencies
+This script will:
+1. ✅ Validate code and build Docker image
+2. ✅ Test locally
+3. ✅ Push to Git repository
+4. ✅ Push to Docker Hub
+5. ✅ Deploy to QNAP NAS
+6. ✅ Monitor deployment health
 
-## 🌟 What You Get
+## 🏗️ Architecture
 
-### ✅ **Working Core Services**
-- **PostgreSQL Database**: Complete civic data storage (Port 5432)
-- **Redis**: Task queue and caching (Port 6379) 
-- **Celery Beat**: Automated scheduling system
-- **Celery Worker**: Background task processing
-- **API Infrastructure**: RESTful endpoints (Port 8000)
+### Single Container Design
+The system runs everything in one container for simplicity and ease of deployment:
 
-### 🔧 **Current Status**
-- ✅ **Database**: Fully operational with schema
-- ✅ **Task Scheduling**: Automated scraping system active
-- ✅ **Data Storage**: Complete PostgreSQL setup
-- ✅ **Infrastructure**: Docker orchestration working
-- 🔨 **Dashboard**: Under development (TypeScript build issues)
-- 🔨 **GraphQL API**: Schema refinement in progress
-- 🔨 **Flower Monitoring**: Configuration updates needed
+- **PostgreSQL** - Database (Port 5432)
+- **Redis** - Cache and message broker (Port 6379)
+- **FastAPI** - REST API and GraphQL (Port 8000)
+- **React Dashboard** - Web interface (Port 3000)
+- **Celery Worker** - Background task processing
+- **Celery Beat** - Scheduled tasks
+- **Flower** - Task monitoring (Port 5555)
+- **Nginx** - Reverse proxy and load balancer (Port 80)
 
-### 🇨🇦 **Canadian Civic Data Coverage**
-- **123 Active Jurisdictions** across Canada
-- **Federal Priority**: Parliament of Canada ready
-- **14 Provincial/Territorial** governments configured
-- **108 Municipal** jurisdictions prepared
-- **Automated Data Collection** framework in place
-
-## 🎯 Access Your System
-
-After running `./setup.sh`, you can access:
-
-- **🗄️ Database**: localhost:5432 (opencivicdata/openpolicy/openpolicy123)
-- **📡 Redis**: localhost:6379
-- **🔧 API Base**: http://localhost:8000 (when fully operational)
-- **🌺 Monitoring**: http://localhost:5555 (when configured)
-
-## ✨ Key Features
-
-### 🔥 **One-Command Setup**
-- Automatic Docker installation and configuration
-- Complete dependency management
-- Environment variable generation
-- Database schema initialization
-
-### 🏗 **Production-Ready Architecture**
+### Service Dependencies
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Task Queue    │    │    Database      │    │   Scheduling    │
-│                 │    │                  │    │                 │
-│ • Celery Worker │───▶│ • PostgreSQL     │◀───│ • Celery Beat   │
-│ • Redis Broker  │    │ • Federal Focus  │    │ • Automated     │
-│ • Task Results  │    │ • Data Integrity │    │ • Error Recovery│
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-        │                       │                       │
-        │               ┌───────────────┐               │
-        └──────────────▶│   API Layer   │◀──────────────┘
-                        │               │
-                        │ • FastAPI     │
-                        │ • GraphQL     │
-                        │ • OpenAPI     │
-                        │ • Rate Limit  │
-                        └───────────────┘
+Nginx (Port 80)
+├── API (Port 8000)
+├── Dashboard (Port 3000)
+└── Flower (Port 5555)
+
+API (Port 8000)
+├── PostgreSQL (Port 5432)
+└── Redis (Port 6379)
+
+Celery Worker
+├── PostgreSQL (Port 5432)
+└── Redis (Port 6379)
 ```
 
-### 📋 **Data Structure Ready**
-- **Representatives**: MPs, MPPs/MLAs, Mayors, Councillors
-- **Bills**: Federal (priority), provincial, and municipal legislation
-- **Committees**: Standing and special committees with membership
-- **Events**: Meetings, votes, readings, legislative activities
-- **Votes**: Individual representative voting records
+## 📁 Project Structure
 
-## 🛠 **System Management**
+```
+OpenPolicyAshBack/
+├── src/                    # Python backend code
+│   ├── api/               # FastAPI endpoints
+│   ├── database/          # Database models and config
+│   ├── scheduler/         # Celery tasks
+│   └── scrapers/          # Data scraping modules
+├── dashboard/             # React frontend
+│   ├── src/              # React components
+│   └── package.json      # Node.js dependencies
+├── policies/             # OpenPolicy rules
+├── scrapers/             # Data scraping scripts
+├── Dockerfile.single-container  # Single container build
+├── docker-compose.single.yml    # Local development
+├── deploy-all.sh         # Complete deployment script
+├── monitor-system.sh     # System monitoring
+└── nginx.conf           # Nginx configuration
+```
 
-### Start/Stop Services
+## 🔧 Configuration
+
+### Environment Variables
 ```bash
-# Stop the system
-sudo docker compose down
-
-# Restart all services
-sudo docker compose restart
-
-# View service status
-sudo docker compose ps
-
-# View logs
-sudo docker compose logs -f
+DATABASE_URL=postgresql://openpolicy:openpolicy123@localhost:5432/opencivicdata
+REDIS_URL=redis://localhost:6379/0
+CORS_ORIGINS=http://localhost:3000,http://localhost:80,http://ashishsnas.myqnapcloud.com
+NODE_ENV=production
 ```
 
-### Database Access
-```bash
-# Connect to database
-psql -h localhost -p 5432 -U openpolicy -d opencivicdata
+### Ports
+- **80** - Main entry point (Nginx)
+- **8000** - API (direct access)
+- **3000** - Dashboard (direct access)
+- **5555** - Flower monitor
+- **6379** - Redis (direct access)
+- **5432** - PostgreSQL (direct access)
 
-# Check service health
-sudo docker compose exec postgres pg_isready
+## 🚀 Deployment
+
+### Local Development
+```bash
+# Build and run locally
+docker-compose -f docker-compose.single.yml up --build
+
+# Access the application
+# Dashboard: http://localhost
+# API Docs: http://localhost/api/docs
+# Health: http://localhost/health
 ```
 
-## 🔧 **Configuration**
-
-The system uses a comprehensive `.env` file with all necessary variables:
-
+### Production Deployment
 ```bash
-# Core system is working with these defaults
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=opencivicdata
-DB_USER=openpolicy
-DB_PASSWORD=openpolicy123
+# Complete deployment to all targets
+./deploy-all.sh
 
-# Redis configuration
-REDIS_URL=redis://redis:6379/0
+# Or deploy step by step:
+# 1. Build image
+docker build -f Dockerfile.single-container -t ashishtandon/openpolicy-single:latest .
 
-# Security (automatically generated)
-JWT_SECRET_KEY=[auto-generated]
+# 2. Push to Docker Hub
+docker push ashishtandon/openpolicy-single:latest
+
+# 3. Deploy to QNAP
+ssh admin@ashishsnas.myqnapcloud.com "docker pull ashishtandon/openpolicy-single:latest"
 ```
 
-## 🚀 **Next Steps**
+## 📊 Monitoring
 
-The core infrastructure is operational. To complete the system:
-
-1. **Fix GraphQL Schema**: Resolve type annotation issues
-2. **Complete Dashboard**: Fix TypeScript build errors
-3. **Configure Flower**: Complete monitoring setup
-4. **Initialize Scrapers**: Begin data collection
-
-## 🛠 **Advanced Usage**
-
-### Manual Task Execution
+### System Health Check
 ```bash
-# Run database initialization
-sudo docker compose exec api python manage.py init
-
-# Check service connectivity
-sudo docker compose exec api python -c "import redis; r=redis.Redis(host='redis'); print(r.ping())"
-
-# Test database connection
-sudo docker compose exec postgres psql -U openpolicy -d opencivicdata -c "SELECT COUNT(*) FROM information_schema.tables;"
+./monitor-system.sh
 ```
 
-### Development Commands
+This script checks:
+- ✅ Container status
+- ✅ All endpoints
+- ✅ Database connectivity
+- ✅ System resources
+- ✅ Recent logs
+- ✅ Auto-restart if needed
+
+### Manual Health Checks
 ```bash
-# Rebuild specific service
-sudo docker compose build api
+# API Health
+curl https://ashishsnas.myqnapcloud.com/health
+
+# Dashboard
+curl https://ashishsnas.myqnapcloud.com/
+
+# Database Stats
+curl https://ashishsnas.myqnapcloud.com/api/stats
+
+# Flower Monitor
+curl https://ashishsnas.myqnapcloud.com:5555
+```
+
+## 🔍 API Endpoints
+
+### Core Endpoints
+- `GET /health` - System health check
+- `GET /api/stats` - Database statistics
+- `GET /api/docs` - API documentation
+
+### Data Endpoints
+- `GET /api/jurisdictions` - List jurisdictions
+- `GET /api/representatives` - List representatives
+- `GET /api/bills` - List bills
+- `GET /api/committees` - List committees
+- `GET /api/events` - List events
+- `GET /api/votes` - List votes
+
+### GraphQL
+- `POST /graphql` - GraphQL endpoint
+
+### AI Features
+- `POST /api/ai/analyze-bill/{bill_id}` - Analyze bill
+- `POST /api/ai/federal-briefing` - Generate federal briefing
+- `POST /api/enrich/bill/{bill_id}` - Enrich bill data
+
+## 🛠️ Development
+
+### Adding New Features
+1. **Backend**: Add to `src/api/` for new endpoints
+2. **Frontend**: Add to `dashboard/src/` for new UI components
+3. **Database**: Update `src/database/models.py` for new tables
+4. **Tasks**: Add to `src/scheduler/tasks.py` for background jobs
+
+### Testing
+```bash
+# Run comprehensive tests
+python run_comprehensive_tests.py
+
+# Test specific components
+python test_system.py
+python test_scrapers.py
+```
+
+### Logs
+```bash
+# View container logs
+docker logs openpolicy_single
 
 # View specific service logs
-sudo docker compose logs api
-
-# Enter service shell
-sudo docker compose exec api bash
+docker exec openpolicy_single tail -f /var/log/supervisor/api.log
+docker exec openpolicy_single tail -f /var/log/supervisor/dashboard.log
 ```
 
-## 🔐 **Production Deployment**
+## 🔒 Security
 
-For production use, update `.env` with:
+### Rate Limiting
+- API: 10 requests/second
+- Dashboard: 30 requests/second
 
+### CORS Configuration
+- Configured for localhost and QNAP domain
+- Secure headers enabled
+
+### Database Security
+- PostgreSQL with authentication
+- Redis with default security
+
+## 📈 Performance
+
+### Optimization Features
+- Nginx reverse proxy with gzip compression
+- Redis caching layer
+- Database connection pooling
+- Static asset caching
+- Rate limiting
+
+### Resource Usage
+- **Memory**: ~2GB (PostgreSQL + Redis + Applications)
+- **CPU**: 2-4 cores recommended
+- **Storage**: 10GB+ for database and logs
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+**Container won't start:**
 ```bash
-# Generate secure values
-ENVIRONMENT=production
-DEBUG=false
-DB_PASSWORD=[secure-random-password]
-JWT_SECRET_KEY=[secure-random-key]
-API_KEY_REQUIRED=true
+# Check logs
+docker logs openpolicy_single
+
+# Check health
+./monitor-system.sh
 ```
 
-## 📊 **System Requirements**
+**Database connection issues:**
+```bash
+# Check PostgreSQL
+docker exec openpolicy_single su - postgres -c "pg_isready"
 
-- **Minimum**: 4GB RAM, 2 CPU cores, 10GB storage
-- **Recommended**: 8GB RAM, 4 CPU cores, 50GB storage
-- **OS**: Linux (tested on Ubuntu), macOS with Docker Desktop
-- **Dependencies**: Docker and Docker Compose (auto-installed)
+# Check Redis
+docker exec openpolicy_single redis-cli ping
+```
 
-## 🤝 **Contributing**
+**API not responding:**
+```bash
+# Check API logs
+docker exec openpolicy_single tail -f /var/log/supervisor/api.log
 
-The core infrastructure is ready for development:
+# Restart services
+docker restart openpolicy_single
+```
 
-1. **Add Scrapers**: Extend data collection capabilities
-2. **Enhance API**: Complete GraphQL implementation
-3. **Build Dashboard**: Complete the React frontend
-4. **Add Features**: Federal priority monitoring, AI analysis
+### Recovery Procedures
+```bash
+# Full system restart
+docker stop openpolicy_single
+docker rm openpolicy_single
+docker-compose -f docker-compose.single.yml up -d
 
-## 📄 **Technical Details**
+# Database reset (WARNING: Data loss)
+docker exec openpolicy_single su - postgres -c "dropdb opencivicdata"
+docker exec openpolicy_single su - postgres -c "createdb opencivicdata"
+```
 
-- **Python 3.13**: Latest Python with comprehensive dependencies
-- **PostgreSQL 17**: Modern database with full civic data schema
-- **Redis 7**: High-performance task queue and caching
-- **FastAPI**: Modern Python web framework
-- **Celery**: Distributed task processing
-- **Docker**: Containerized deployment
+## 📞 Support
+
+### Access URLs
+- **Production**: https://ashishsnas.myqnapcloud.com/
+- **API Docs**: https://ashishsnas.myqnapcloud.com/api/docs
+- **Health Check**: https://ashishsnas.myqnapcloud.com/health
+- **Flower Monitor**: https://ashishsnas.myqnapcloud.com:5555
+
+### Monitoring
+- Run `./monitor-system.sh` for system status
+- Check logs in `/var/log/supervisor/`
+- Monitor container health with `docker ps`
+
+### Emergency Contacts
+- System logs: `docker logs openpolicy_single`
+- Health check: `curl https://ashishsnas.myqnapcloud.com/health`
+- Restart: `docker restart openpolicy_single`
 
 ---
 
-**🇨🇦 OpenPolicy Backend Ash Aug 2025** - The foundation for comprehensive Canadian civic data collection and analysis.
-
-**Core infrastructure operational. Ready for feature development.**
+**Last Updated**: $(date +'%Y-%m-%d')
+**Version**: 1.0.0
+**Status**: Production Ready ✅

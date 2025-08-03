@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  openpolicy:
+    build:
+      context: .
+      dockerfile: Dockerfile.single-container
+    container_name: openpolicy_single
+    ports:
+      - "80:80"      # Nginx (main entry point)
+      - "8000:8000"  # API (direct access)
+      - "3000:3000"  # Dashboard (direct access)
+      - "5555:5555"  # Flower Monitor
+      - "6379:6379"  # Redis (direct access)
+      - "5432:5432"  # PostgreSQL (direct access)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./regions_report.json:/app/regions_report.json:ro
+      - ./scrapers:/app/scrapers:ro
+      - ./policies:/app/policies:ro
+    environment:
+      - DATABASE_URL=postgresql://openpolicy:openpolicy123@localhost:5432/opencivicdata
+      - REDIS_URL=redis://localhost:6379/0
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:80,http://ashishsnas.myqnapcloud.com
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - openpolicy_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  openpolicy_network:
+    driver: bridge 
