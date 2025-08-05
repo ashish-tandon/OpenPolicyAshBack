@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 🚀 Simple Azure Container Apps deployment for OpenPolicy API
-# Deploys only the API without dashboard build requirements
+# 🚀 Azure Deployment Script for OpenPolicy with Dashboard
+# Deploys to Azure Container Apps with full UI and API
 
 set -e
 
@@ -9,7 +9,7 @@ set -e
 RESOURCE_GROUP="openpolicy-rg"
 LOCATION="eastus"
 ACR_NAME="openpolicyacr"
-CONTAINER_APP_NAME="openpolicy-api"
+CONTAINER_APP_NAME="openpolicy-app"
 ENVIRONMENT_NAME="openpolicy-env"
 
 # Colors for output
@@ -36,10 +36,6 @@ error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-step() {
-    echo -e "${BLUE}🔧 $1${NC}"
-}
-
 # Function to check prerequisites
 check_prerequisites() {
     log "Checking prerequisites..."
@@ -57,6 +53,13 @@ check_prerequisites() {
         exit 1
     fi
     success "Docker is installed"
+    
+    # Check Node.js for dashboard build
+    if ! command -v node &> /dev/null; then
+        error "Node.js is not installed (required for dashboard build)"
+        exit 1
+    fi
+    success "Node.js is installed"
     
     # Check Azure login
     if ! az account show &> /dev/null; then
@@ -105,22 +108,22 @@ create_container_registry() {
 
 # Function to build and push Docker image
 build_and_push_image() {
-    log "Building Docker image for Linux/AMD64..."
+    log "Building Docker image with dashboard for Linux/AMD64..."
     
     # Check if Dockerfile exists
-    if [ ! -f "Dockerfile.api" ]; then
-        error "Dockerfile.api not found"
+    if [ ! -f "Dockerfile" ]; then
+        error "Dockerfile not found"
         exit 1
     fi
     
     # Build the image for Linux/AMD64 (Azure requirement)
-    docker build --platform linux/amd64 -f Dockerfile.api \
-        -t "$ACR_NAME.azurecr.io/openpolicy-api:latest" .
-    success "Docker image built"
+    docker build --platform linux/amd64 \
+        -t "$ACR_NAME.azurecr.io/openpolicy:latest" .
+    success "Docker image built with dashboard"
     
     # Push to registry
     log "Pushing image to container registry..."
-    docker push "$ACR_NAME.azurecr.io/openpolicy-api:latest"
+    docker push "$ACR_NAME.azurecr.io/openpolicy:latest"
     success "Image pushed to registry"
 }
 
@@ -160,19 +163,18 @@ deploy_container_app() {
         --name "$CONTAINER_APP_NAME" \
         --resource-group "$RESOURCE_GROUP" \
         --environment "$ENVIRONMENT_NAME" \
-        --image "$ACR_NAME.azurecr.io/openpolicy-api:latest" \
-        --target-port 8000 \
+        --image "$ACR_NAME.azurecr.io/openpolicy:latest" \
+        --target-port 80 \
         --ingress external \
         --registry-server "$ACR_NAME.azurecr.io" \
         --registry-username "$registry_username" \
         --registry-password "$registry_password" \
         --env-vars \
             DATABASE_URL="sqlite:///./openpolicy.db" \
-            REDIS_URL="redis://localhost:6379/0" \
-            CORS_ORIGINS="https://openpolicy-api.kindgrass-4bb31d5d.eastus.azurecontainerapps.io" \
+            CORS_ORIGINS="https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io" \
             NODE_ENV="production" \
-        --cpu 1 \
-        --memory 2Gi \
+        --cpu 2 \
+        --memory 4Gi \
         --min-replicas 1 \
         --max-replicas 3
     
@@ -196,9 +198,10 @@ get_container_app_info() {
     echo "   URL: https://$url"
     echo ""
     echo "🌐 Access URLs:"
-    echo "   API Root: https://$url"
+    echo "   Dashboard: https://$url"
+    echo "   API Root: https://$url/api"
     echo "   Health Check: https://$url/health"
-    echo "   API Documentation: https://$url/docs"
+    echo "   API Documentation: https://$url/api/docs"
     echo ""
 }
 
@@ -207,7 +210,7 @@ test_deployment() {
     log "Testing deployment..."
     
     # Wait a bit for services to start
-    sleep 30
+    sleep 60
     
     # Get the URL
     local url=$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
@@ -220,12 +223,12 @@ test_deployment() {
         warning "Health endpoint is not responding yet (this is normal during startup)"
     fi
     
-    # Test root endpoint
-    log "Testing root endpoint..."
+    # Test dashboard
+    log "Testing dashboard..."
     if curl -f -s --max-time 30 "https://$url/" >/dev/null 2>&1; then
-        success "Root endpoint is responding"
+        success "Dashboard is responding"
     else
-        warning "Root endpoint is not responding yet (this is normal during startup)"
+        warning "Dashboard is not responding yet (this is normal during startup)"
     fi
     
     echo ""
@@ -248,7 +251,7 @@ show_management_commands() {
     echo "   az containerapp revision set-mode --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --mode multiple"
     echo ""
     echo "   # Update the application"
-    echo "   az containerapp update --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/openpolicy-api:latest"
+    echo "   az containerapp update --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/openpolicy:latest"
     echo ""
     echo "   # Delete the application"
     echo "   az containerapp delete --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --yes"
@@ -261,10 +264,10 @@ show_management_commands() {
 # Function to create deployment summary
 create_deployment_summary() {
     local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-    local summary_file="azure_container_apps_deployment_summary_${timestamp}.md"
+    local summary_file="azure_deployment_summary_${timestamp}.md"
     
     cat > "$summary_file" << EOF
-# Azure Container Apps Deployment Summary
+# Azure Deployment Summary
 
 **Date**: $(date)
 **Container App**: $CONTAINER_APP_NAME
@@ -272,29 +275,40 @@ create_deployment_summary() {
 **Environment**: $ENVIRONMENT_NAME
 
 ## Configuration
-- **Image**: $ACR_NAME.azurecr.io/openpolicy-api:latest
+- **Image**: $ACR_NAME.azurecr.io/openpolicy:latest
 - **Platform**: Linux/AMD64
-- **CPU**: 1 core
-- **Memory**: 2GB
+- **CPU**: 2 cores
+- **Memory**: 4GB
 - **Scaling**: 1-3 replicas
 - **Ingress**: External with HTTPS
 
 ## URLs
-- **API Root**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
+- **Dashboard**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
+- **API Root**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/api
 - **Health Check**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/health
-- **API Documentation**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/docs
+- **API Documentation**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/api/docs
 
 ## Environment Variables
 - DATABASE_URL: sqlite:///./openpolicy.db
-- REDIS_URL: redis://localhost:6379/0
-- CORS_ORIGINS: https://openpolicy-api.kindgrass-4bb31d5d.eastus.azurecontainerapps.io
+- CORS_ORIGINS: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io
 - NODE_ENV: production
+
+## Features
+- ✅ Dashboard UI (React + Vite)
+- ✅ FastAPI Backend
+- ✅ SQLite Database
+- ✅ Nginx Reverse Proxy
+- ✅ Rate Limiting (In-Memory)
+- ✅ HTTPS with SSL
+- ✅ Auto-scaling
+- ✅ Health Checks
 
 ## Notes
 - Platform: Linux/AMD64 (explicitly specified for Azure)
 - OS Type: Linux (managed by Azure Container Apps)
 - HTTPS: Automatically configured with SSL
 - Auto-scaling: Enabled (1-3 replicas)
+- Redis: Removed (using in-memory rate limiting)
 EOF
     
     success "Deployment summary created: $summary_file"
@@ -302,7 +316,7 @@ EOF
 
 # Main deployment function
 main() {
-    echo "🚀 Starting Simple Azure Container Apps deployment for OpenPolicy"
+    echo "🚀 Starting Azure deployment for OpenPolicy with Dashboard"
     echo "Resource Group: $RESOURCE_GROUP"
     echo "Location: $LOCATION"
     echo "Container Registry: $ACR_NAME"
@@ -322,8 +336,8 @@ main() {
     create_deployment_summary
     
     echo ""
-    success "Azure Container Apps deployment completed successfully!"
-    echo "🎉 Your OpenPolicy API is now running on Azure Container Apps!"
+    success "Azure deployment completed successfully!"
+    echo "🎉 Your OpenPolicy system with Dashboard is now running on Azure Container Apps!"
 }
 
 # Run main function

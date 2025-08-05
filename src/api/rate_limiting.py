@@ -2,6 +2,7 @@
 API Rate Limiting and Authentication for OpenPolicy Database
 
 Implements comprehensive rate limiting, API key authentication, and security features.
+Redis-free implementation using in-memory storage.
 """
 
 import os
@@ -11,12 +12,10 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from fastapi import HTTPException, Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import redis
 import jwt
 from sqlalchemy.orm import Session
-
-# Redis connection for rate limiting
-redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+from collections import defaultdict
+import threading
 
 # Security configuration
 security = HTTPBearer(auto_error=False)
@@ -25,11 +24,12 @@ API_RATE_LIMIT = int(os.getenv("API_RATE_LIMIT", "1000"))  # requests per hour
 RATE_LIMIT_ENABLED = os.getenv("API_RATE_LIMIT_ENABLED", "true").lower() == "true"
 API_KEY_REQUIRED = os.getenv("API_KEY_REQUIRED", "false").lower() == "true"
 
-class RateLimiter:
-    """Redis-based rate limiter"""
+class InMemoryRateLimiter:
+    """In-memory rate limiter (Redis-free)"""
     
-    def __init__(self, redis_client: redis.Redis):
-        self.redis = redis_client
+    def __init__(self):
+        self.requests = defaultdict(list)
+        self.lock = threading.Lock()
     
     def is_allowed(self, key: str, limit: int, window: int = 3600) -> Dict[str, Any]:
         """
@@ -44,26 +44,28 @@ class RateLimiter:
             Dict with allowed status and remaining requests
         """
         now = int(time.time())
-        pipe = self.redis.pipeline()
         
-        # Sliding window rate limiting
-        pipe.zremrangebyscore(key, 0, now - window)
-        pipe.zcard(key)
-        pipe.zadd(key, {str(now): now})
-        pipe.expire(key, window)
-        
-        results = pipe.execute()
-        current_requests = results[1]
-        
-        return {
-            "allowed": current_requests < limit,
-            "current": current_requests,
-            "limit": limit,
-            "reset_time": now + window,
-            "remaining": max(0, limit - current_requests - 1)
-        }
+        with self.lock:
+            # Clean old requests outside the window
+            self.requests[key] = [req_time for req_time in self.requests[key] 
+                                if now - req_time < window]
+            
+            # Count current requests
+            current_requests = len(self.requests[key])
+            
+            # Add current request
+            self.requests[key].append(now)
+            
+            return {
+                "allowed": current_requests < limit,
+                "current": current_requests,
+                "limit": limit,
+                "reset_time": now + window,
+                "remaining": max(0, limit - current_requests - 1)
+            }
 
-rate_limiter = RateLimiter(redis_client)
+# Global rate limiter instance
+rate_limiter = InMemoryRateLimiter()
 
 def get_client_ip(request: Request) -> str:
     """Extract client IP from request headers"""
@@ -207,9 +209,12 @@ def require_permission(permission: str):
         )
     return decorator
 
-# Usage tracking
+# Usage tracking (in-memory)
+usage_stats = defaultdict(lambda: defaultdict(int))
+usage_lock = threading.Lock()
+
 async def track_api_usage(request: Request, user: Dict[str, Any] = None):
-    """Track API usage for analytics"""
+    """Track API usage for analytics (in-memory)"""
     if not user:
         return
     
@@ -217,9 +222,8 @@ async def track_api_usage(request: Request, user: Dict[str, Any] = None):
     endpoint = request.url.path
     method = request.method
     
-    # Increment usage counter
-    redis_client.hincrby(usage_key, f"{method}:{endpoint}", 1)
-    redis_client.expire(usage_key, 86400 * 30)  # Keep for 30 days
+    with usage_lock:
+        usage_stats[usage_key][f"{method}:{endpoint}"] += 1
 
 # Security headers middleware
 async def add_security_headers(request: Request, call_next):
