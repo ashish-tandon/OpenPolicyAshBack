@@ -10,7 +10,7 @@ import json
 import asyncio
 from datetime import datetime
 
-from ..progress_tracker import progress_tracker, TaskStatus, TaskType
+from src.progress_tracker import progress_tracker, TaskStatus, TaskType
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
 
@@ -217,7 +217,7 @@ async def start_operation(operation_name: str, background_tasks: BackgroundTasks
 # Background task functions
 async def run_database_initialization():
     """Run database initialization with progress tracking"""
-    from ..database.init_db import initialize_database_with_progress
+    from src.database.init_db import initialize_database_with_progress
     
     try:
         await initialize_database_with_progress(progress_tracker)
@@ -226,7 +226,7 @@ async def run_database_initialization():
 
 async def run_full_scrape():
     """Run full scraping operation with progress tracking"""
-    from ..scrapers.enhanced_scraper import run_full_scrape_with_progress
+    from src.scrapers.enhanced_scraper import run_full_scrape_with_progress
     
     try:
         await run_full_scrape_with_progress(progress_tracker)
@@ -236,7 +236,7 @@ async def run_full_scrape():
 
 async def run_federal_priority_scrape():
     """Run federal priority scraping with progress tracking"""
-    from ..scrapers.federal_priority_scraper import run_federal_scrape_with_progress
+    from src.scrapers.federal_priority_scraper import run_federal_scrape_with_progress
     
     try:
         await run_federal_scrape_with_progress(progress_tracker)

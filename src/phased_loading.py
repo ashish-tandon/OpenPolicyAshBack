@@ -80,7 +80,7 @@ class PhasedLoader:
         self.session_factory = get_session_factory(self.engine)
         
         # Scraper manager
-        self.scraper_manager = ScraperManager(self.session_factory())
+        self.scraper_manager = ScraperManager()
         
         # Load existing session if any
         self._load_existing_session()

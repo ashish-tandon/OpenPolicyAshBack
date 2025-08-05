@@ -21,13 +21,13 @@ from src.database.models import (
     Jurisdiction, Representative, Bill, Committee, Event, Vote,
     JurisdictionType, RepresentativeRole, BillStatus
 )
-from api.models import (
+from src.api.models import (
     JurisdictionResponse, RepresentativeResponse, BillResponse,
     CommitteeResponse, EventResponse, VoteResponse, StatsResponse
 )
-from api.scheduling import router as scheduling_router
-from api.rate_limiting import rate_limit_middleware, add_security_headers, get_current_user
-from api.graphql_schema import schema
+from src.api.scheduling import router as scheduling_router
+from src.api.rate_limiting import rate_limit_middleware, add_security_headers, get_current_user
+from src.api.graphql_schema import schema
 
 # Create FastAPI app
 app = FastAPI(
@@ -51,11 +51,11 @@ app.add_middleware(
 app.include_router(scheduling_router, tags=["scheduling"])
 
 # Include progress tracking router
-from api.progress_api import router as progress_router
+from src.api.progress_api import router as progress_router
 app.include_router(progress_router, tags=["progress"])
 
 # Include phased loading router
-from api.phased_loading_api import router as phased_loading_router
+from src.api.phased_loading_api import router as phased_loading_router
 app.include_router(phased_loading_router, tags=["phased-loading"])
 
 # Include GraphQL
@@ -66,7 +66,9 @@ app.include_router(graphql_app, prefix="/graphql", tags=["graphql"])
 # Rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    return await rate_limit_middleware(request, call_next)
+    from src.api.rate_limiting import rate_limit_middleware as rate_limit_func
+    await rate_limit_func(request)
+    return await call_next(request)
 
 # Security headers middleware
 @app.middleware("http")

@@ -41,7 +41,7 @@ COPY policies/ ./policies/
 # Copy dashboard and build it
 COPY dashboard/ ./dashboard/
 WORKDIR /app/dashboard
-RUN npm ci --only=production && npm run build
+RUN npm ci && npm run build && npm prune --production
 WORKDIR /app
 
 # Create necessary directories
