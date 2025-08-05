@@ -69,7 +69,7 @@ docker run -d \
     --network openpolicy_network \
     -e POSTGRES_DB=opencivicdata \
     -e POSTGRES_USER=openpolicy \
-    -e POSTGRES_PASSWORD=openpolicy123 \
+    -e POSTGRES_PASSWORD=\${DB_PASSWORD:-openpolicy123} \
     -p 5432:5432 \
     --restart unless-stopped \
     postgres:15
