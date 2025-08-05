@@ -1,0 +1,7 @@
+2025-08-05 17:19:24,613 - INFO - 🚀 Starting comprehensive test run...
+2025-08-05 17:19:24,613 - INFO - 🔍 Checking prerequisites...
+2025-08-05 17:19:24,613 - INFO - ❌ Python packages: Missing package: No module named 'pytest'
+2025-08-05 17:19:24,613 - INFO - ❌ Database: PostgreSQL connection failed: No module named 'psycopg2'
+2025-08-05 17:19:24,613 - INFO - ❌ Redis: Redis connection failed: No module named 'redis'
+2025-08-05 17:19:24,613 - INFO - ❌ API: API connection failed: No module named 'requests'
+2025-08-05 17:19:24,613 - ERROR - ❌ Prerequisites not met. Aborting test run.
