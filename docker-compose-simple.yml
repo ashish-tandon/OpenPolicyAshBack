@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: openpolicy_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - openpolicy_network
+
+  openpolicy:
+    image: ashishtandon9/openpolicyashback:latest
+    container_name: openpolicy_simple
+    platform: linux/amd64
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./regions_report.json:/app/regions_report.json:ro
+      - ./scrapers:/app/scrapers:ro
+      - ./policies:/app/policies:ro
+    environment:
+      - DATABASE_URL=sqlite:///./data/openpolicy.db
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000,http://ashishsnas.myqnapcloud.com
+      - NODE_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - openpolicy_network
+
+networks:
+  openpolicy_network:
+    driver: bridge 

@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# OpenPolicy Simple Deployment Script
-# Focuses on Git push and QNAP deployment
+# 🚀 Simple OpenPolicy Deployment
+# Deploy using the Azure Container Registry image (SQLite-based)
+# Usage: ./deploy-simple.sh
 
 set -e
 
 # Configuration
+DOCKER_IMAGE="ashishtandon9/openpolicyashback:latest"
 QNAP_HOST="ashishsnas.myqnapcloud.com"
-QNAP_PORT="22"
 QNAP_USER="admin"
-CONTAINER_NAME="openpolicy_single"
 
 # Colors for output
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
-# Logging function
+# Logging functions
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
 }
@@ -35,312 +35,213 @@ error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
-# Function to check prerequisites
-check_prerequisites() {
-    log "Checking prerequisites..."
-    
-    if ! command -v git >/dev/null 2>&1; then
-        error "Git is not installed"
-        exit 1
-    fi
-    
-    if ! command -v ssh >/dev/null 2>&1; then
-        error "SSH is not installed"
-        exit 1
-    fi
-    
-    success "All prerequisites are met"
+step() {
+    echo -e "${PURPLE}🔧 $1${NC}"
 }
 
-# Function to validate code
-validate_code() {
-    log "Validating code..."
+# Function to deploy to local Docker
+deploy_local() {
+    step "Deploying to local Docker environment..."
     
-    # Check if we're in the right directory
-    if [ ! -f "Dockerfile.single-container" ]; then
-        error "Dockerfile.single-container not found. Are you in the correct directory?"
-        exit 1
-    fi
+    # Stop existing containers
+    log "Stopping existing containers..."
+    docker stop openpolicy_simple 2>/dev/null || true
+    docker rm openpolicy_simple 2>/dev/null || true
     
-    # Check if main API file exists
-    if [ ! -f "src/api/main.py" ]; then
-        error "src/api/main.py not found"
-        exit 1
-    fi
+    # Pull Docker Hub image
+    log "Pulling Docker Hub image..."
+    docker pull --platform linux/amd64 "$DOCKER_IMAGE"
     
-    # Test Python syntax
-    if python3 -m py_compile src/api/main.py; then
-        success "Python syntax validation passed"
+    # Start container
+    log "Starting container..."
+    docker run -d \
+        --name openpolicy_simple \
+        --restart unless-stopped \
+        --platform linux/amd64 \
+        -p 8000:8000 \
+        -v "$(pwd)/data:/app/data" \
+        "$DOCKER_IMAGE"
+    
+    # Wait for health check
+    log "Waiting for health check..."
+    sleep 15
+    
+    # Verify deployment
+    if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+        success "Local deployment successful"
     else
-        error "Python syntax validation failed"
-        exit 1
-    fi
-    
-    # Check if dashboard exists
-    if [ ! -f "dashboard/package.json" ]; then
-        error "Dashboard package.json not found"
-        exit 1
-    fi
-    
-    success "Code validation completed"
-}
-
-# Function to push to Git
-push_to_git() {
-    log "Pushing to Git..."
-    
-    # Check if there are changes to commit
-    if git diff-index --quiet HEAD --; then
-        warning "No changes to commit"
-    else
-        # Add all changes
-        git add .
-        
-        # Commit with timestamp
-        TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
-        if git commit -m "Deployment update - ${TIMESTAMP}"; then
-            success "Changes committed"
-        else
-            error "Failed to commit changes"
-            exit 1
-        fi
-    fi
-    
-    # Push to remote
-    if git push origin main; then
-        success "Successfully pushed to Git"
-    else
-        error "Failed to push to Git"
-        exit 1
+        error "Local deployment failed - health check failed"
+        return 1
     fi
 }
 
 # Function to deploy to QNAP
-deploy_to_qnap() {
-    log "Deploying to QNAP..."
+deploy_qnap() {
+    step "Deploying to QNAP Container Station..."
     
     # Create deployment script for QNAP
-    cat > qnap-deploy-remote.sh << 'EOF'
+    cat > /tmp/qnap-deploy-simple.sh << EOF
 #!/bin/bash
 set -e
 
-echo "🚀 Starting QNAP deployment..."
+# QNAP deployment script using Docker Hub image
+CONTAINER_NAME="openpolicy_simple"
+IMAGE_NAME="$DOCKER_IMAGE"
 
-# Stop and remove existing container
-echo "📦 Stopping existing container..."
-docker stop openpolicy_single 2>/dev/null || true
-docker rm openpolicy_single 2>/dev/null || true
+echo "Stopping existing container..."
+docker stop \$CONTAINER_NAME 2>/dev/null || true
+docker rm \$CONTAINER_NAME 2>/dev/null || true
 
-# Remove old image
-echo "🗑️ Removing old image..."
-docker rmi ashishtandon/openpolicy-single:latest 2>/dev/null || true
+echo "Pulling Docker Hub image..."
+docker pull \$IMAGE_NAME
 
-# Pull latest image
-echo "⬇️ Pulling latest image..."
-docker pull ashishtandon/openpolicy-single:latest
+echo "Starting container..."
+docker run -d \\
+    --name \$CONTAINER_NAME \\
+    --restart unless-stopped \\
+    -p 8000:8000 \\
+    -v /share/Container/openpolicy:/app/data \\
+    \$IMAGE_NAME
 
-# Create docker-compose file
-echo "📝 Creating docker-compose configuration..."
-cat > docker-compose.yml << 'COMPOSE_EOF'
-version: '3.8'
+echo "Waiting for health check..."
+sleep 20
 
-services:
-  openpolicy:
-    image: ashishtandon/openpolicy-single:latest
-    container_name: openpolicy_single
-    ports:
-      - "80:80"
-      - "8000:8000"
-      - "3000:3000"
-      - "5555:5555"
-      - "6379:6379"
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - DATABASE_URL=postgresql://openpolicy:openpolicy123@localhost:5432/opencivicdata
-      - REDIS_URL=redis://localhost:6379/0
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:80,http://ashishsnas.myqnapcloud.com
-      - NODE_ENV=production
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/app/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-volumes:
-  postgres_data:
-    driver: local
-COMPOSE_EOF
-
-# Start the container
-echo "🚀 Starting the container..."
-docker-compose up -d
-
-# Wait for services to be ready
-echo "⏳ Waiting for services to be ready..."
-sleep 30
-
-# Test health endpoint
-echo "🏥 Testing health endpoint..."
+echo "Verifying deployment..."
 if curl -f http://localhost:8000/health >/dev/null 2>&1; then
-    echo "✅ API health check passed"
+    echo "QNAP deployment successful"
 else
-    echo "❌ API health check failed"
-    docker logs openpolicy_single
+    echo "QNAP deployment failed"
     exit 1
 fi
-
-# Test dashboard
-echo "🖥️ Testing dashboard..."
-if curl -f http://localhost:3000 >/dev/null 2>&1; then
-    echo "✅ Dashboard health check passed"
-else
-    echo "❌ Dashboard health check failed"
-    docker logs openpolicy_single
-    exit 1
-fi
-
-echo "✅ QNAP deployment completed successfully"
 EOF
-
-    # Make script executable
-    chmod +x qnap-deploy-remote.sh
     
-    # Copy script to QNAP and execute
-    if scp -P ${QNAP_PORT} qnap-deploy-remote.sh ${QNAP_USER}@${QNAP_HOST}:/tmp/; then
-        success "Deployment script copied to QNAP"
-    else
-        error "Failed to copy deployment script to QNAP"
-        exit 1
-    fi
+    # Copy and execute deployment script on QNAP
+    log "Copying deployment script to QNAP..."
+    scp /tmp/qnap-deploy-simple.sh "$QNAP_USER@$QNAP_HOST:/tmp/"
     
-    # Execute deployment on QNAP
-    if ssh -p ${QNAP_PORT} ${QNAP_USER}@${QNAP_HOST} "bash /tmp/qnap-deploy-remote.sh"; then
-        success "Successfully deployed to QNAP"
-    else
-        error "Failed to deploy to QNAP"
-        exit 1
-    fi
+    log "Executing deployment on QNAP..."
+    ssh "$QNAP_USER@$QNAP_HOST" "chmod +x /tmp/qnap-deploy-simple.sh && /tmp/qnap-deploy-simple.sh"
     
-    # Clean up local script
-    rm qnap-deploy-remote.sh
+    success "QNAP deployment completed"
 }
 
-# Function to monitor deployment
-monitor_deployment() {
-    log "Monitoring deployment..."
+# Function to verify deployments
+verify_deployments() {
+    step "Verifying all deployments..."
     
-    # Test QNAP deployment
-    log "Testing QNAP deployment..."
+    local failed_deployments=()
     
-    # Wait a bit for services to stabilize
-    sleep 10
-    
-    # Test API
-    if curl -f https://${QNAP_HOST}/health >/dev/null 2>&1; then
-        success "QNAP API is responding"
+    # Check local deployment
+    log "Checking local deployment..."
+    if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+        success "Local deployment verified"
     else
-        warning "QNAP API health check failed"
+        failed_deployments+=("Local")
     fi
     
-    # Test dashboard
-    if curl -f https://${QNAP_HOST}/ >/dev/null 2>&1; then
-        success "QNAP Dashboard is responding"
+    # Check QNAP deployment
+    log "Checking QNAP deployment..."
+    if ssh "$QNAP_USER@$QNAP_HOST" "curl -f http://localhost:8000/health >/dev/null 2>&1"; then
+        success "QNAP deployment verified"
     else
-        warning "QNAP Dashboard health check failed"
+        failed_deployments+=("QNAP")
     fi
     
-    success "Deployment monitoring completed"
+    if [ ${#failed_deployments[@]} -eq 0 ]; then
+        success "All deployments verified successfully"
+    else
+        warning "Some deployments failed verification: ${failed_deployments[*]}"
+    fi
 }
 
-# Function to create deployment summary
-create_summary() {
-    log "Creating deployment summary..."
+# Function to generate deployment report
+generate_report() {
+    step "Generating deployment report..."
     
-    TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')
+    local report_file="deployment_report_simple_$(date +%Y%m%d_%H%M%S).md"
     
-    cat > DEPLOYMENT_SUMMARY_${TIMESTAMP// /_}.md << EOF
-# OpenPolicy Deployment Summary
+    cat > "$report_file" << EOF
+# OpenPolicy Simple Deployment Report
 
-**Deployment Date:** ${TIMESTAMP}
+**Date**: $(date)  
+**Status**: COMPLETED
 
-## Deployment Status
+## Deployment Summary
 
-### ✅ Git Repository
-- Changes committed and pushed
-- Repository: $(git remote get-url origin)
+### Docker Image Used
+- **Docker Hub**: $DOCKER_IMAGE
 
-### ✅ QNAP NAS
-- Host: ${QNAP_HOST}
-- Container: ${CONTAINER_NAME}
-- Status: Running
+### Runtime Environments
+- **Local Docker**: ✅ Deployed
+- **QNAP Container Station**: ✅ Deployed
 
-## Access URLs
+## Health Check Results
 
-- **Main Dashboard:** https://${QNAP_HOST}/
-- **API Documentation:** https://${QNAP_HOST}/api/docs
-- **Health Check:** https://${QNAP_HOST}/health
-- **Flower Monitor:** https://${QNAP_HOST}:5555
+### Local Environment
+- **URL**: http://localhost:8000/health
+- **Status**: $(curl -f http://localhost:8000/health >/dev/null 2>&1 && echo "✅ Healthy" || echo "❌ Failed")
 
-## Services Included
+### QNAP Environment
+- **URL**: http://$QNAP_HOST:8000/health
+- **Status**: $(ssh "$QNAP_USER@$QNAP_HOST" "curl -f http://localhost:8000/health >/dev/null 2>&1" && echo "✅ Healthy" || echo "❌ Failed")
 
-1. **PostgreSQL Database** - Port 5432
-2. **Redis Cache** - Port 6379
-3. **FastAPI Backend** - Port 8000
-4. **React Dashboard** - Port 3000
-5. **Celery Worker** - Background
-6. **Celery Beat** - Background
-7. **Flower Monitor** - Port 5555
-8. **Nginx Reverse Proxy** - Port 80
+## API Endpoints
 
-## Health Checks
+### Health Check
+- **GET** http://localhost:8000/health
 
-- Database connectivity
-- Redis connectivity
-- API responsiveness
-- Dashboard accessibility
+### API Endpoints
+- **GET** http://localhost:8000/api/health
+- **GET** http://localhost:8000/api/stats
+- **GET** http://localhost:8000/api/jurisdictions
+- **GET** http://localhost:8000/api/representatives
+- **GET** http://localhost:8000/api/bills
 
 ## Next Steps
 
-1. Monitor system performance
-2. Check logs for any errors
-3. Verify all features are working
-4. Set up regular backups
+1. Test API endpoints
+2. Monitor application performance
+3. Check error logs for any issues
+4. Verify all features are working correctly
 
+---
+*Report generated by OpenPolicy Simple Deployment Script*
 EOF
-
-    success "Deployment summary created: DEPLOYMENT_SUMMARY_${TIMESTAMP// /_}.md"
+    
+    success "Deployment report generated: $report_file"
 }
 
-# Main deployment function
+# Function to cleanup temporary files
+cleanup() {
+    log "Cleaning up temporary files..."
+    rm -f /tmp/qnap-deploy-simple.sh 2>/dev/null || true
+}
+
+# Main execution function
 main() {
-    log "🚀 Starting OpenPolicy Simple Deployment"
-    log "Targets: Git, QNAP"
+    echo -e "${PURPLE}🚀 OpenPolicy Simple Deployment${NC}"
+    echo ""
     
-    # Check prerequisites
-    check_prerequisites
+    # Set up error handling
+    trap cleanup EXIT
     
-    # Validate code
-    validate_code
+    # Execute deployment steps
+    deploy_local
+    deploy_qnap
+    verify_deployments
+    generate_report
     
-    # Push to Git
-    push_to_git
-    
-    # Deploy to QNAP
-    deploy_to_qnap
-    
-    # Monitor deployment
-    monitor_deployment
-    
-    # Create summary
-    create_summary
-    
-    log "🎉 Deployment completed successfully!"
-    log "Access your application at: https://${QNAP_HOST}/"
+    echo ""
+    success "🎉 Simple deployment completed successfully!"
+    echo ""
+    echo -e "${BLUE}📊 Access URLs:${NC}"
+    echo "Local: http://localhost:8000/health"
+    echo "QNAP: http://$QNAP_HOST:8000/health"
+    echo ""
+    echo -e "${BLUE}📋 API Documentation:${NC}"
+    echo "API Docs: http://localhost:8000/docs"
+    echo "ReDoc: http://localhost:8000/redoc"
 }
 
-# Run main function
+# Execute main function
 main "$@" 

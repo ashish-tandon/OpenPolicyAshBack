@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   openpolicy:
-    build:
-      context: .
-      dockerfile: Dockerfile.single-container
+    image: ashishtandon9/openpolicyashback:latest
     container_name: openpolicy_single
     ports:
       - "80:80"      # Nginx (main entry point)
