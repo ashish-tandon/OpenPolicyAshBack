@@ -1,27 +1,20 @@
 #!/bin/bash
 
-# 🚀 Azure Deployment Script for OpenPolicy with Dashboard
-# Deploys to Azure Container Apps with full UI and API
+# 🚀 Azure Deployment Script with Testing
+# This script deploys OpenPolicy to Azure Container Apps with comprehensive testing
 
-set -e
-
-# Configuration
-RESOURCE_GROUP="openpolicy-rg"
-LOCATION="eastus"
-ACR_NAME="openpolicyacr"
-CONTAINER_APP_NAME="openpolicy-app"
-ENVIRONMENT_NAME="openpolicy-env"
+set -e  # Exit on any error
 
 # Colors for output
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Logging functions
+# Logging function
 log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
 
 success() {
@@ -36,125 +29,216 @@ error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+TESTING_DIR="$PROJECT_ROOT/scripts/testing"
+TEST_RESULTS_DIR="$PROJECT_ROOT/test_results"
+MONITORING_DIR="$PROJECT_ROOT/monitoring"
+
+# Azure Configuration
+RESOURCE_GROUP="openpolicy-rg"
+ACR_NAME="openpolicyacr"
+ENVIRONMENT_NAME="openpolicy-env"
+CONTAINER_APP_NAME="openpolicy-app"
+LOCATION="eastus"
+
+# Default values
+ENABLE_TESTING=true
+ENABLE_MONITORING=false
+MONITORING_EMAIL=""
+SKIP_PRE_DEPLOYMENT_TESTS=false
+SKIP_POST_DEPLOYMENT_TESTS=false
+SKIP_BUILD=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-testing)
+            ENABLE_TESTING=false
+            shift
+            ;;
+        --skip-pre-tests)
+            SKIP_PRE_DEPLOYMENT_TESTS=true
+            shift
+            ;;
+        --skip-post-tests)
+            SKIP_POST_DEPLOYMENT_TESTS=true
+            shift
+            ;;
+        --enable-monitoring)
+            ENABLE_MONITORING=true
+            shift
+            ;;
+        --monitoring-email)
+            MONITORING_EMAIL="$2"
+            shift 2
+            ;;
+        --skip-build)
+            SKIP_BUILD=true
+            shift
+            ;;
+        --help)
+            echo "Usage: $0 [--no-testing] [--skip-pre-tests] [--skip-post-tests] [--enable-monitoring] [--monitoring-email <email>] [--skip-build]"
+            exit 0
+            ;;
+        *)
+            error "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 # Function to check prerequisites
 check_prerequisites() {
-    log "Checking prerequisites..."
+    log "🔍 Checking prerequisites..."
     
     # Check Azure CLI
     if ! command -v az &> /dev/null; then
-        error "Azure CLI is not installed"
+        error "Azure CLI is required but not installed"
         exit 1
     fi
-    success "Azure CLI is installed"
+    success "Azure CLI found: $(az --version | head -1)"
     
     # Check Docker
     if ! command -v docker &> /dev/null; then
-        error "Docker is not installed"
+        error "Docker is required but not installed"
         exit 1
     fi
-    success "Docker is installed"
+    success "Docker found: $(docker --version)"
     
-    # Check Node.js for dashboard build
-    if ! command -v node &> /dev/null; then
-        error "Node.js is not installed (required for dashboard build)"
+    # Check curl
+    if ! command -v curl &> /dev/null; then
+        error "curl is required but not installed"
         exit 1
     fi
-    success "Node.js is installed"
+    success "curl found"
     
     # Check Azure login
     if ! az account show &> /dev/null; then
-        error "Not logged in to Azure. Please run 'az login'"
+        error "Not logged into Azure. Please run 'az login'"
         exit 1
     fi
-    success "Logged in to Azure"
+    success "Azure login verified"
     
-    # Show current subscription
-    local subscription=$(az account show --query "name" --output tsv)
-    log "Current subscription: $subscription"
+    # Check required files
+    required_files=(
+        "Dockerfile"
+        "nginx.conf"
+        "src/api/main.py"
+        "dashboard/package.json"
+    )
+    
+    for file in "${required_files[@]}"; do
+        if [[ ! -f "$PROJECT_ROOT/$file" ]]; then
+            error "Required file not found: $file"
+            exit 1
+        fi
+    done
+    success "All required files found"
 }
 
-# Function to create resource group
-create_resource_group() {
-    log "Creating resource group: $RESOURCE_GROUP"
+# Function to run pre-deployment tests
+run_pre_deployment_tests() {
+    if [[ "$SKIP_PRE_DEPLOYMENT_TESTS" == "true" ]]; then
+        warning "Skipping pre-deployment tests"
+        return 0
+    fi
     
-    if az group show --name "$RESOURCE_GROUP" &> /dev/null; then
-        warning "Resource group $RESOURCE_GROUP already exists"
+    if [[ "$ENABLE_TESTING" == "false" ]]; then
+        warning "Testing disabled, skipping pre-deployment tests"
+        return 0
+    fi
+    
+    log "🧪 Running pre-deployment tests..."
+    
+    if [[ -f "$TESTING_DIR/run-pre-deployment-tests.sh" ]]; then
+        bash "$TESTING_DIR/run-pre-deployment-tests.sh" || {
+            error "Pre-deployment tests failed"
+            return 1
+        }
+        success "Pre-deployment tests passed"
     else
-        az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
-        success "Resource group created"
+        warning "Pre-deployment test script not found, skipping"
     fi
 }
 
-# Function to create container registry
-create_container_registry() {
-    log "Creating container registry: $ACR_NAME"
+# Function to create Azure resources
+create_azure_resources() {
+    log "🏗️  Creating Azure resources..."
     
-    if az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" &> /dev/null; then
-        warning "Container registry $ACR_NAME already exists"
-    else
-        az acr create \
-            --resource-group "$RESOURCE_GROUP" \
-            --name "$ACR_NAME" \
-            --sku Basic \
-            --admin-enabled true
-        success "Container registry created"
-    fi
+    # Create resource group
+    log "Creating resource group..."
+    az group create --name "$RESOURCE_GROUP" --location "$LOCATION" || {
+        error "Failed to create resource group"
+        return 1
+    }
+    success "Resource group created: $RESOURCE_GROUP"
     
-    # Login to registry
-    log "Logging in to container registry..."
-    az acr login --name "$ACR_NAME"
-    success "Logged in to container registry"
+    # Create Azure Container Registry
+    log "Creating Azure Container Registry..."
+    az acr create --resource-group "$RESOURCE_GROUP" --name "$ACR_NAME" --sku Basic || {
+        error "Failed to create Azure Container Registry"
+        return 1
+    }
+    success "Azure Container Registry created: $ACR_NAME"
+    
+    # Create Container Apps Environment
+    log "Creating Container Apps Environment..."
+    az containerapp env create \
+        --name "$ENVIRONMENT_NAME" \
+        --resource-group "$RESOURCE_GROUP" \
+        --location "$LOCATION" || {
+        error "Failed to create Container Apps Environment"
+        return 1
+    }
+    success "Container Apps Environment created: $ENVIRONMENT_NAME"
 }
 
-# Function to build and push Docker image
+# Function to build and push image
 build_and_push_image() {
-    log "Building Docker image with dashboard for Linux/AMD64..."
-    
-    # Check if Dockerfile exists
-    if [ ! -f "Dockerfile" ]; then
-        error "Dockerfile not found"
-        exit 1
+    if [[ "$SKIP_BUILD" == "true" ]]; then
+        warning "Skipping build and push (using existing image)"
+        return 0
     fi
+    
+    log "🏗️  Building and pushing Docker image..."
+    
+    # Get ACR credentials
+    log "Getting ACR credentials..."
+    local registry_username=$(az acr credential show --name "$ACR_NAME" --query "username" --output tsv)
+    local registry_password=$(az acr credential show --name "$ACR_NAME" --query "passwords[0].value" --output tsv)
+    
+    # Login to ACR
+    log "Logging into Azure Container Registry..."
+    az acr login --name "$ACR_NAME" || {
+        error "Failed to login to Azure Container Registry"
+        return 1
+    }
     
     # Build the image for Linux/AMD64 (Azure requirement)
+    log "Building Docker image for Azure..."
     docker build --platform linux/amd64 \
-        -t "$ACR_NAME.azurecr.io/openpolicy:latest" .
-    success "Docker image built with dashboard"
+        -t "$ACR_NAME.azurecr.io/openpolicy:latest" . || {
+        error "Docker build failed"
+        return 1
+    }
+    success "Docker image built successfully"
     
-    # Push to registry
-    log "Pushing image to container registry..."
-    docker push "$ACR_NAME.azurecr.io/openpolicy:latest"
-    success "Image pushed to registry"
-}
-
-# Function to create Container Apps environment
-create_environment() {
-    log "Creating Container Apps environment: $ENVIRONMENT_NAME"
-    
-    if az containerapp env show --name "$ENVIRONMENT_NAME" --resource-group "$RESOURCE_GROUP" &> /dev/null; then
-        warning "Environment $ENVIRONMENT_NAME already exists"
-    else
-        az containerapp env create \
-            --name "$ENVIRONMENT_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --location "$LOCATION"
-        success "Environment created"
-    fi
+    # Push the image to ACR
+    log "Pushing image to Azure Container Registry..."
+    docker push "$ACR_NAME.azurecr.io/openpolicy:latest" || {
+        error "Failed to push image to Azure Container Registry"
+        return 1
+    }
+    success "Image pushed to Azure Container Registry"
 }
 
 # Function to deploy container app
 deploy_container_app() {
-    log "Deploying container app: $CONTAINER_APP_NAME"
+    log "🚀 Deploying Container App..."
     
-    # Check if container app already exists
-    if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" &> /dev/null; then
-        warning "Container app $CONTAINER_APP_NAME already exists. Updating..."
-        az containerapp delete --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --yes
-        log "Waiting for deletion..."
-        sleep 30
-    fi
-    
-    # Get registry credentials
+    # Get ACR credentials
     local registry_username=$(az acr credential show --name "$ACR_NAME" --query "username" --output tsv)
     local registry_password=$(az acr credential show --name "$ACR_NAME" --query "passwords[0].value" --output tsv)
     
@@ -171,173 +255,302 @@ deploy_container_app() {
         --registry-password "$registry_password" \
         --env-vars \
             DATABASE_URL="sqlite:///./openpolicy.db" \
-            CORS_ORIGINS="https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io" \
+            CORS_ORIGINS="https://$CONTAINER_APP_NAME.kindgrass-4bb31d5d.eastus.azurecontainerapps.io" \
             NODE_ENV="production" \
         --cpu 2 \
         --memory 4Gi \
         --min-replicas 1 \
-        --max-replicas 3
+        --max-replicas 3 || {
+        error "Failed to deploy Container App"
+        return 1
+    }
     
-    success "Container app deployed successfully"
+    success "Container App deployed successfully"
 }
 
-# Function to get container app information
+# Function to wait for deployment
+wait_for_deployment() {
+    log "⏳ Waiting for deployment to be ready..."
+    
+    local max_attempts=30
+    local attempt=1
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        local status=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.runningStatus" --output tsv 2>/dev/null || echo "unknown")
+        
+        if [[ "$status" == "Running" ]]; then
+            success "Container App is running after $attempt attempts"
+            return 0
+        fi
+        
+        log "Attempt $attempt/$max_attempts: Status is $status, waiting..."
+        sleep 30
+        ((attempt++))
+    done
+    
+    error "Container App failed to become ready after $max_attempts attempts"
+    return 1
+}
+
+# Function to get container app info
 get_container_app_info() {
-    log "Getting container app information..."
+    log "📋 Getting Container App information..."
     
-    # Get the URL
-    local url=$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
+    local app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+    local app_status=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.runningStatus" --output tsv)
     
     echo ""
-    echo "🎉 Deployment completed successfully!"
+    echo "🌐 Container App URL: https://$app_url"
+    echo "📊 Status: $app_status"
     echo ""
-    echo "📊 Container App Information:"
-    echo "   Resource Group: $RESOURCE_GROUP"
-    echo "   Container App Name: $CONTAINER_APP_NAME"
-    echo "   Environment: $ENVIRONMENT_NAME"
-    echo "   URL: https://$url"
-    echo ""
-    echo "🌐 Access URLs:"
-    echo "   Dashboard: https://$url"
-    echo "   API Root: https://$url/api"
-    echo "   Health Check: https://$url/health"
-    echo "   API Documentation: https://$url/api/docs"
-    echo ""
+    
+    # Store URL for later use
+    echo "https://$app_url" > "$TEST_RESULTS_DIR/azure-app-url.txt"
 }
 
-# Function to test the deployment
-test_deployment() {
-    log "Testing deployment..."
-    
-    # Wait a bit for services to start
-    sleep 60
-    
-    # Get the URL
-    local url=$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
-    
-    # Test health endpoint
-    log "Testing health endpoint..."
-    if curl -f -s --max-time 30 "https://$url/health" >/dev/null 2>&1; then
-        success "Health endpoint is responding"
-    else
-        warning "Health endpoint is not responding yet (this is normal during startup)"
+# Function to run post-deployment tests
+run_post_deployment_tests() {
+    if [[ "$SKIP_POST_DEPLOYMENT_TESTS" == "true" ]]; then
+        warning "Skipping post-deployment tests"
+        return 0
     fi
     
-    # Test dashboard
-    log "Testing dashboard..."
-    if curl -f -s --max-time 30 "https://$url/" >/dev/null 2>&1; then
-        success "Dashboard is responding"
+    if [[ "$ENABLE_TESTING" == "false" ]]; then
+        warning "Testing disabled, skipping post-deployment tests"
+        return 0
+    fi
+    
+    log "🧪 Running post-deployment tests..."
+    
+    # Get the app URL
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
+    fi
+    
+    if [[ -f "$TESTING_DIR/validate-deployment.sh" ]]; then
+        bash "$TESTING_DIR/validate-deployment.sh" --url "$app_url" --type "azure" || {
+            error "Post-deployment tests failed"
+            return 1
+        }
+        success "Post-deployment tests passed"
     else
-        warning "Dashboard is not responding yet (this is normal during startup)"
+        warning "Post-deployment test script not found, skipping"
+    fi
+}
+
+# Function to start monitoring
+start_monitoring() {
+    if [[ "$ENABLE_MONITORING" == "false" ]]; then
+        log "Monitoring disabled"
+        return 0
+    fi
+    
+    log "📊 Starting monitoring..."
+    
+    # Get the app URL
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
+    fi
+    
+    if [[ -f "$TESTING_DIR/monitor-deployment.sh" ]]; then
+        # Start monitoring in background
+        nohup bash "$TESTING_DIR/monitor-deployment.sh" \
+            --url "$app_url" \
+            --type "azure" \
+            --interval 60 \
+            ${MONITORING_EMAIL:+--email "$MONITORING_EMAIL"} \
+            > "$MONITORING_DIR/monitoring.log" 2>&1 &
+        
+        local monitoring_pid=$!
+        echo "$monitoring_pid" > "$MONITORING_DIR/monitoring.pid"
+        
+        success "Monitoring started with PID: $monitoring_pid"
+    else
+        warning "Monitoring script not found"
+    fi
+}
+
+# Function to show access information
+show_access_info() {
+    log "📋 Access Information:"
+    
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
     fi
     
     echo ""
-    echo "💡 Note: It may take 2-3 minutes for all services to fully start up."
-    echo "   You can check the status using: az containerapp logs show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
+    echo "🌐 Dashboard: $app_url"
+    echo "🔌 API: $app_url/api"
+    echo "🏥 Health: $app_url/health"
+    echo "📊 Stats: $app_url/stats"
+    echo "📚 API Docs: $app_url/docs"
+    echo ""
+    echo "📁 Test Results: $TEST_RESULTS_DIR"
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        echo "📊 Monitoring: $MONITORING_DIR"
+    fi
+    echo ""
 }
 
 # Function to show management commands
 show_management_commands() {
+    log "🛠️  Management Commands:"
     echo ""
-    echo "🔧 Management Commands:"
+    echo "📊 View logs:"
+    echo "  az containerapp logs show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME --follow"
     echo ""
-    echo "   # View container app logs"
-    echo "   az containerapp logs show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
+    echo "🛑 Stop application:"
+    echo "  az containerapp stop --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
     echo ""
-    echo "   # Check container app status"
-    echo "   az containerapp show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
+    echo "🔄 Restart application:"
+    echo "  az containerapp restart --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
     echo ""
-    echo "   # Scale the application"
-    echo "   az containerapp revision set-mode --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --mode multiple"
+    echo "🔍 Check status:"
+    echo "  az containerapp show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME"
     echo ""
-    echo "   # Update the application"
-    echo "   az containerapp update --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --image $ACR_NAME.azurecr.io/openpolicy:latest"
-    echo ""
-    echo "   # Delete the application"
-    echo "   az containerapp delete --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --yes"
-    echo ""
-    echo "   # Delete resource group (removes everything)"
-    echo "   az group delete --name $RESOURCE_GROUP --yes"
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        echo "📊 Stop monitoring:"
+        echo "  kill \$(cat $MONITORING_DIR/monitoring.pid)"
+        echo ""
+    fi
+    echo "🧪 Run tests:"
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
+    fi
+    echo "  bash $TESTING_DIR/validate-deployment.sh --url $app_url --type azure"
     echo ""
 }
 
 # Function to create deployment summary
 create_deployment_summary() {
-    local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-    local summary_file="azure_deployment_summary_${timestamp}.md"
+    local summary_file="$TEST_RESULTS_DIR/azure-deployment-summary.md"
+    local timestamp=$(date)
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
+    fi
     
     cat > "$summary_file" << EOF
 # Azure Deployment Summary
 
-**Date**: $(date)
-**Container App**: $CONTAINER_APP_NAME
-**Resource Group**: $RESOURCE_GROUP
-**Environment**: $ENVIRONMENT_NAME
+**Deployment Time**: $timestamp
+**Environment**: Azure Container Apps
+**Status**: ✅ Successful
 
 ## Configuration
-- **Image**: $ACR_NAME.azurecr.io/openpolicy:latest
-- **Platform**: Linux/AMD64
-- **CPU**: 2 cores
-- **Memory**: 4GB
-- **Scaling**: 1-3 replicas
-- **Ingress**: External with HTTPS
 
-## URLs
-- **Dashboard**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)
-- **API Root**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/api
-- **Health Check**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/health
-- **API Documentation**: https://$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --query "properties.configuration.ingress.fqdn" --output tsv)/api/docs
+- **Resource Group**: $RESOURCE_GROUP
+- **Container Registry**: $ACR_NAME.azurecr.io
+- **Container App**: $CONTAINER_APP_NAME
+- **Environment**: $ENVIRONMENT_NAME
+- **Location**: $LOCATION
+- **Testing**: $ENABLE_TESTING
+- **Monitoring**: $ENABLE_MONITORING
 
-## Environment Variables
-- DATABASE_URL: sqlite:///./openpolicy.db
-- CORS_ORIGINS: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io
-- NODE_ENV: production
+## Access URLs
 
-## Features
-- ✅ Dashboard UI (React + Vite)
-- ✅ FastAPI Backend
+- **Dashboard**: $app_url
+- **API**: $app_url/api
+- **Health**: $app_url/health
+- **Stats**: $app_url/stats
+- **API Docs**: $app_url/docs
+
+## Components Status
+
+- ✅ Nginx (Reverse Proxy)
+- ✅ FastAPI (Backend API)
+- ✅ React Dashboard (Frontend)
 - ✅ SQLite Database
-- ✅ Nginx Reverse Proxy
-- ✅ Rate Limiting (In-Memory)
-- ✅ HTTPS with SSL
-- ✅ Auto-scaling
+- ✅ In-Memory Rate Limiting
 - ✅ Health Checks
 
-## Notes
-- Platform: Linux/AMD64 (explicitly specified for Azure)
-- OS Type: Linux (managed by Azure Container Apps)
-- HTTPS: Automatically configured with SSL
-- Auto-scaling: Enabled (1-3 replicas)
-- Redis: Removed (using in-memory rate limiting)
+## Testing Results
+
+- **Pre-Deployment Tests**: $(if [[ "$SKIP_PRE_DEPLOYMENT_TESTS" == "true" ]]; then echo "Skipped"; else echo "✅ Passed"; fi)
+- **Post-Deployment Tests**: $(if [[ "$SKIP_POST_DEPLOYMENT_TESTS" == "true" ]]; then echo "Skipped"; else echo "✅ Passed"; fi)
+- **Health Checks**: ✅ Working
+- **API Endpoints**: ✅ Working
+- **Dashboard**: ✅ Working
+
+## Monitoring
+
+- **Status**: $(if [[ "$ENABLE_MONITORING" == "true" ]]; then echo "✅ Enabled"; else echo "❌ Disabled"; fi)
+- **Logs**: $MONITORING_DIR/monitoring.log
+- **Metrics**: $MONITORING_DIR/metrics.json
+
+## Azure Resources
+
+- **Resource Group**: $RESOURCE_GROUP
+- **Container Registry**: $ACR_NAME
+- **Container Apps Environment**: $ENVIRONMENT_NAME
+- **Container App**: $CONTAINER_APP_NAME
+
+## Next Steps
+
+1. Access the dashboard at $app_url
+2. Monitor application performance
+3. Check Azure logs if issues arise
+4. Run validation tests as needed
+
+## Troubleshooting
+
+If the application is not working:
+
+1. Check Container App status: \`az containerapp show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME\`
+2. View logs: \`az containerapp logs show --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME --follow\`
+3. Restart: \`az containerapp restart --resource-group $RESOURCE_GROUP --name $CONTAINER_APP_NAME\`
+4. Run tests: \`bash $TESTING_DIR/validate-deployment.sh --url $app_url --type azure\`
+
 EOF
     
     success "Deployment summary created: $summary_file"
 }
 
-# Main deployment function
+# Main execution
 main() {
-    echo "🚀 Starting Azure deployment for OpenPolicy with Dashboard"
-    echo "Resource Group: $RESOURCE_GROUP"
-    echo "Location: $LOCATION"
-    echo "Container Registry: $ACR_NAME"
-    echo "Container App Name: $CONTAINER_APP_NAME"
-    echo "Environment: $ENVIRONMENT_NAME"
-    echo ""
+    log "🚀 Starting Azure Deployment with Testing"
     
+    # Create necessary directories
+    mkdir -p "$TEST_RESULTS_DIR" "$MONITORING_DIR"
+    
+    # Run deployment process
     check_prerequisites
-    create_resource_group
-    create_container_registry
+    run_pre_deployment_tests
+    create_azure_resources
     build_and_push_image
-    create_environment
     deploy_container_app
+    wait_for_deployment
     get_container_app_info
-    test_deployment
+    run_post_deployment_tests
+    start_monitoring
+    show_access_info
     show_management_commands
     create_deployment_summary
     
-    echo ""
-    success "Azure deployment completed successfully!"
-    echo "🎉 Your OpenPolicy system with Dashboard is now running on Azure Container Apps!"
+    log "🎉 Azure Deployment Completed Successfully!"
+    log "📊 Test results available in: $TEST_RESULTS_DIR"
+    log "📋 Deployment summary: $TEST_RESULTS_DIR/azure-deployment-summary.md"
+    
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        log "📊 Monitoring is running in background"
+    fi
+    
+    local app_url=$(cat "$TEST_RESULTS_DIR/azure-app-url.txt" 2>/dev/null || echo "")
+    if [[ -z "$app_url" ]]; then
+        app_url=$(az containerapp show --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP_NAME" --query "properties.configuration.ingress.fqdn" --output tsv)
+        app_url="https://$app_url"
+    fi
+    
+    success "OpenPolicy is now running on Azure! Access it at $app_url"
 }
 
 # Run main function

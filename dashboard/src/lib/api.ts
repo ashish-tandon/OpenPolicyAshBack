@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://192.168.2.152:8000',
+  baseURL: '', // Use relative URLs to work with current domain
   timeout: 30000,
 })
 

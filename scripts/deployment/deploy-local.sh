@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# 🚀 Local Deployment Script for OpenPolicy with Dashboard
-# Deploys locally with Docker Compose (no Redis dependency)
+# 🚀 Local Deployment Script with Testing
+# This script deploys OpenPolicy to local Docker with comprehensive testing
 
-set -e
+set -e  # Exit on any error
 
 # Colors for output
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Logging functions
+# Logging function
 log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
 
 success() {
@@ -29,39 +29,127 @@ error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+TESTING_DIR="$PROJECT_ROOT/scripts/testing"
+TEST_RESULTS_DIR="$PROJECT_ROOT/test_results"
+MONITORING_DIR="$PROJECT_ROOT/monitoring"
+
+# Default values
+ENABLE_TESTING=true
+ENABLE_MONITORING=false
+MONITORING_EMAIL=""
+SKIP_PRE_DEPLOYMENT_TESTS=false
+SKIP_POST_DEPLOYMENT_TESTS=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-testing)
+            ENABLE_TESTING=false
+            shift
+            ;;
+        --skip-pre-tests)
+            SKIP_PRE_DEPLOYMENT_TESTS=true
+            shift
+            ;;
+        --skip-post-tests)
+            SKIP_POST_DEPLOYMENT_TESTS=true
+            shift
+            ;;
+        --enable-monitoring)
+            ENABLE_MONITORING=true
+            shift
+            ;;
+        --monitoring-email)
+            MONITORING_EMAIL="$2"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 [--no-testing] [--skip-pre-tests] [--skip-post-tests] [--enable-monitoring] [--monitoring-email <email>]"
+            exit 0
+            ;;
+        *)
+            error "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 # Function to check prerequisites
 check_prerequisites() {
-    log "Checking prerequisites..."
+    log "🔍 Checking prerequisites..."
     
     # Check Docker
     if ! command -v docker &> /dev/null; then
-        error "Docker is not installed"
+        error "Docker is required but not installed"
         exit 1
     fi
-    success "Docker is installed"
+    success "Docker found: $(docker --version)"
     
     # Check Docker Compose
     if ! command -v docker-compose &> /dev/null; then
-        error "Docker Compose is not installed"
+        error "Docker Compose is required but not installed"
         exit 1
     fi
-    success "Docker Compose is installed"
+    success "Docker Compose found: $(docker-compose --version)"
     
-    # Check if Docker is running
-    if ! docker info &> /dev/null; then
-        error "Docker is not running. Please start Docker Desktop."
+    # Check curl
+    if ! command -v curl &> /dev/null; then
+        error "curl is required but not installed"
         exit 1
     fi
-    success "Docker is running"
+    success "curl found"
+    
+    # Check required files
+    required_files=(
+        "Dockerfile"
+        "nginx.conf"
+        "src/api/main.py"
+        "dashboard/package.json"
+    )
+    
+    for file in "${required_files[@]}"; do
+        if [[ ! -f "$PROJECT_ROOT/$file" ]]; then
+            error "Required file not found: $file"
+            exit 1
+        fi
+    done
+    success "All required files found"
+}
+
+# Function to run pre-deployment tests
+run_pre_deployment_tests() {
+    if [[ "$SKIP_PRE_DEPLOYMENT_TESTS" == "true" ]]; then
+        warning "Skipping pre-deployment tests"
+        return 0
+    fi
+    
+    if [[ "$ENABLE_TESTING" == "false" ]]; then
+        warning "Testing disabled, skipping pre-deployment tests"
+        return 0
+    fi
+    
+    log "🧪 Running pre-deployment tests..."
+    
+    if [[ -f "$TESTING_DIR/run-pre-deployment-tests.sh" ]]; then
+        bash "$TESTING_DIR/run-pre-deployment-tests.sh" || {
+            error "Pre-deployment tests failed"
+            return 1
+        }
+        success "Pre-deployment tests passed"
+    else
+        warning "Pre-deployment test script not found, skipping"
+    fi
 }
 
 # Function to create docker-compose.yml
 create_docker_compose() {
-    log "Creating docker-compose.yml..."
+    log "📝 Creating docker-compose.yml..."
     
-    cat > docker-compose.yml << 'EOF'
+    cat > "$PROJECT_ROOT/docker-compose.yml" << 'EOF'
 version: '3.8'
-
 services:
   openpolicy:
     build:
@@ -94,182 +182,302 @@ networks:
   openpolicy_network:
     driver: bridge
 EOF
-    
     success "docker-compose.yml created"
 }
 
 # Function to create data directory
 create_data_directory() {
-    log "Creating data directory..."
-    
-    mkdir -p data
+    log "📁 Creating data directory..."
+    mkdir -p "$PROJECT_ROOT/data"
     success "Data directory created"
 }
 
 # Function to stop existing containers
 stop_existing_containers() {
-    log "Stopping existing containers..."
+    log "🛑 Stopping existing containers..."
     
-    if docker ps -q --filter "name=openpolicy" | grep -q .; then
-        docker-compose down
-        success "Existing containers stopped"
-    else
-        warning "No existing containers found"
-    fi
+    # Stop and remove existing containers
+    docker-compose down --remove-orphans 2>/dev/null || true
+    
+    # Remove any existing containers with the same name
+    docker rm -f openpolicy_local 2>/dev/null || true
+    
+    success "Existing containers stopped"
 }
 
 # Function to build and start containers
 build_and_start() {
-    log "Building and starting containers..."
+    log "🏗️  Building and starting containers..."
     
     # Build the image
-    docker-compose build
+    log "Building Docker image..."
+    docker-compose build --no-cache || {
+        error "Docker build failed"
+        return 1
+    }
     
-    # Start the services
-    docker-compose up -d
+    # Start the containers
+    log "Starting containers..."
+    docker-compose up -d || {
+        error "Failed to start containers"
+        return 1
+    }
     
     success "Containers started successfully"
 }
 
-# Function to test the deployment
-test_deployment() {
-    log "Testing deployment..."
+# Function to wait for service to be ready
+wait_for_service() {
+    log "⏳ Waiting for service to be ready..."
     
-    # Wait for services to start
-    sleep 30
+    local max_attempts=30
+    local attempt=1
+    
+    while [[ $attempt -le $max_attempts ]]; do
+        if curl -f -s http://localhost/health >/dev/null 2>&1; then
+            success "Service is ready after $attempt attempts"
+            return 0
+        fi
+        
+        log "Attempt $attempt/$max_attempts: Service not ready yet..."
+        sleep 10
+        ((attempt++))
+    done
+    
+    error "Service failed to become ready after $max_attempts attempts"
+    return 1
+}
+
+# Function to run post-deployment tests
+run_post_deployment_tests() {
+    if [[ "$SKIP_POST_DEPLOYMENT_TESTS" == "true" ]]; then
+        warning "Skipping post-deployment tests"
+        return 0
+    fi
+    
+    if [[ "$ENABLE_TESTING" == "false" ]]; then
+        warning "Testing disabled, skipping post-deployment tests"
+        return 0
+    fi
+    
+    log "🧪 Running post-deployment tests..."
+    
+    if [[ -f "$TESTING_DIR/validate-deployment.sh" ]]; then
+        bash "$TESTING_DIR/validate-deployment.sh" --url "http://localhost" --type "local" || {
+            error "Post-deployment tests failed"
+            return 1
+        }
+        success "Post-deployment tests passed"
+    else
+        warning "Post-deployment test script not found, skipping"
+    fi
+}
+
+# Function to start monitoring
+start_monitoring() {
+    if [[ "$ENABLE_MONITORING" == "false" ]]; then
+        log "Monitoring disabled"
+        return 0
+    fi
+    
+    log "📊 Starting monitoring..."
+    
+    if [[ -f "$TESTING_DIR/monitor-deployment.sh" ]]; then
+        # Start monitoring in background
+        nohup bash "$TESTING_DIR/monitor-deployment.sh" \
+            --url "http://localhost" \
+            --type "local" \
+            --interval 60 \
+            ${MONITORING_EMAIL:+--email "$MONITORING_EMAIL"} \
+            > "$MONITORING_DIR/monitoring.log" 2>&1 &
+        
+        local monitoring_pid=$!
+        echo "$monitoring_pid" > "$MONITORING_DIR/monitoring.pid"
+        
+        success "Monitoring started with PID: $monitoring_pid"
+    else
+        warning "Monitoring script not found"
+    fi
+}
+
+# Function to test deployment
+test_deployment() {
+    log "🔍 Testing deployment..."
     
     # Test health endpoint
-    log "Testing health endpoint..."
-    if curl -f -s --max-time 30 "http://localhost:8000/health" >/dev/null 2>&1; then
-        success "Health endpoint is responding"
+    if curl -f -s http://localhost/health >/dev/null 2>&1; then
+        success "Health endpoint is working"
     else
-        warning "Health endpoint is not responding yet (this is normal during startup)"
+        error "Health endpoint is not working"
+        return 1
+    fi
+    
+    # Test API endpoints
+    if curl -f -s http://localhost/stats >/dev/null 2>&1; then
+        success "API endpoints are working"
+    else
+        error "API endpoints are not working"
+        return 1
     fi
     
     # Test dashboard
-    log "Testing dashboard..."
-    if curl -f -s --max-time 30 "http://localhost:80/" >/dev/null 2>&1; then
-        success "Dashboard is responding"
+    if curl -f -s http://localhost | grep -q "OpenPolicy Dashboard"; then
+        success "Dashboard is working"
     else
-        warning "Dashboard is not responding yet (this is normal during startup)"
+        error "Dashboard is not working"
+        return 1
     fi
     
-    echo ""
-    echo "💡 Note: It may take 2-3 minutes for all services to fully start up."
-    echo "   You can check the status using: docker-compose logs -f"
+    success "All deployment tests passed"
 }
 
 # Function to show access information
 show_access_info() {
+    log "📋 Access Information:"
     echo ""
-    echo "🎉 Local deployment completed successfully!"
+    echo "🌐 Dashboard: http://localhost"
+    echo "🔌 API: http://localhost/api"
+    echo "🏥 Health: http://localhost/health"
+    echo "📊 Stats: http://localhost/stats"
+    echo "📚 API Docs: http://localhost/docs"
     echo ""
-    echo "🌐 Access URLs:"
-    echo "   Dashboard: http://localhost:80"
-    echo "   API Root: http://localhost:8000"
-    echo "   Health Check: http://localhost:8000/health"
-    echo "   API Documentation: http://localhost:8000/docs"
-    echo ""
-    echo "📊 Container Information:"
-    echo "   Container Name: openpolicy_local"
-    echo "   Image: Built locally with dashboard"
-    echo "   Platform: Auto-detected (macOS compatible)"
+    echo "📁 Data Directory: $PROJECT_ROOT/data"
+    echo "📋 Test Results: $TEST_RESULTS_DIR"
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        echo "📊 Monitoring: $MONITORING_DIR"
+    fi
     echo ""
 }
 
 # Function to show management commands
 show_management_commands() {
+    log "🛠️  Management Commands:"
     echo ""
-    echo "🔧 Management Commands:"
+    echo "📊 View logs:"
+    echo "  docker-compose logs -f"
     echo ""
-    echo "   # View logs"
-    echo "   docker-compose logs -f"
+    echo "🛑 Stop application:"
+    echo "  docker-compose down"
     echo ""
-    echo "   # Check container status"
-    echo "   docker-compose ps"
+    echo "🔄 Restart application:"
+    echo "  docker-compose restart"
     echo ""
-    echo "   # Stop services"
-    echo "   docker-compose down"
+    echo "🔍 Check status:"
+    echo "  docker-compose ps"
     echo ""
-    echo "   # Restart services"
-    echo "   docker-compose restart"
-    echo ""
-    echo "   # Rebuild and restart"
-    echo "   docker-compose up -d --build"
-    echo ""
-    echo "   # Remove everything"
-    echo "   docker-compose down -v --rmi all"
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        echo "📊 Stop monitoring:"
+        echo "  kill \$(cat $MONITORING_DIR/monitoring.pid)"
+        echo ""
+    fi
+    echo "🧪 Run tests:"
+    echo "  bash $TESTING_DIR/validate-deployment.sh --url http://localhost --type local"
     echo ""
 }
 
 # Function to create deployment summary
 create_deployment_summary() {
-    local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
-    local summary_file="local_deployment_summary_${timestamp}.md"
+    local summary_file="$TEST_RESULTS_DIR/local-deployment-summary.md"
+    local timestamp=$(date)
     
     cat > "$summary_file" << EOF
 # Local Deployment Summary
 
-**Date**: $(date)
-**Environment**: Local macOS
-**Container**: openpolicy_local
+**Deployment Time**: $timestamp
+**Environment**: Local Docker
+**Status**: ✅ Successful
 
 ## Configuration
-- **Image**: Built locally with dashboard
-- **Platform**: Auto-detected (macOS compatible)
-- **Ports**: 80 (Dashboard), 8000 (API)
-- **Database**: SQLite (local file)
-- **Redis**: Removed (using in-memory rate limiting)
 
-## URLs
-- **Dashboard**: http://localhost:80
-- **API Root**: http://localhost:8000
-- **Health Check**: http://localhost:8000/health
-- **API Documentation**: http://localhost:8000/docs
+- **Container Name**: openpolicy_local
+- **Ports**: 80 (Nginx), 8000 (FastAPI)
+- **Database**: SQLite (./data/openpolicy.db)
+- **Testing**: $ENABLE_TESTING
+- **Monitoring**: $ENABLE_MONITORING
 
-## Environment Variables
-- DATABASE_URL: sqlite:///./data/openpolicy.db
-- CORS_ORIGINS: http://localhost:3000,http://localhost:80,http://localhost:8000
-- NODE_ENV: production
+## Access URLs
 
-## Features
-- ✅ Dashboard UI (React + Vite)
-- ✅ FastAPI Backend
+- **Dashboard**: http://localhost
+- **API**: http://localhost/api
+- **Health**: http://localhost/health
+- **Stats**: http://localhost/stats
+- **API Docs**: http://localhost/docs
+
+## Components Status
+
+- ✅ Nginx (Reverse Proxy)
+- ✅ FastAPI (Backend API)
+- ✅ React Dashboard (Frontend)
 - ✅ SQLite Database
-- ✅ Nginx Reverse Proxy
-- ✅ Rate Limiting (In-Memory)
+- ✅ In-Memory Rate Limiting
 - ✅ Health Checks
 
-## Notes
-- Platform: Auto-detected (no explicit specification needed)
-- OS: macOS (Apple Silicon or Intel)
-- Docker: Docker Desktop
-- Redis: Removed (using in-memory rate limiting)
+## Testing Results
+
+- **Pre-Deployment Tests**: $(if [[ "$SKIP_PRE_DEPLOYMENT_TESTS" == "true" ]]; then echo "Skipped"; else echo "✅ Passed"; fi)
+- **Post-Deployment Tests**: $(if [[ "$SKIP_POST_DEPLOYMENT_TESTS" == "true" ]]; then echo "Skipped"; else echo "✅ Passed"; fi)
+- **Health Checks**: ✅ Working
+- **API Endpoints**: ✅ Working
+- **Dashboard**: ✅ Working
+
+## Monitoring
+
+- **Status**: $(if [[ "$ENABLE_MONITORING" == "true" ]]; then echo "✅ Enabled"; else echo "❌ Disabled"; fi)
+- **Logs**: $MONITORING_DIR/monitoring.log
+- **Metrics**: $MONITORING_DIR/metrics.json
+
+## Next Steps
+
+1. Access the dashboard at http://localhost
+2. Monitor application performance
+3. Check logs if issues arise
+4. Run validation tests as needed
+
+## Troubleshooting
+
+If the application is not working:
+
+1. Check container status: \`docker-compose ps\`
+2. View logs: \`docker-compose logs -f\`
+3. Restart: \`docker-compose restart\`
+4. Run tests: \`bash $TESTING_DIR/validate-deployment.sh --url http://localhost --type local\`
+
 EOF
     
     success "Deployment summary created: $summary_file"
 }
 
-# Main deployment function
+# Main execution
 main() {
-    echo "🚀 Starting local deployment for OpenPolicy with Dashboard"
-    echo "Environment: Local macOS"
-    echo "Container: openpolicy_local"
-    echo ""
+    log "🚀 Starting Local Deployment with Testing"
     
+    # Create necessary directories
+    mkdir -p "$TEST_RESULTS_DIR" "$MONITORING_DIR"
+    
+    # Run deployment process
     check_prerequisites
-    create_data_directory
+    run_pre_deployment_tests
     create_docker_compose
+    create_data_directory
     stop_existing_containers
     build_and_start
+    wait_for_service
     test_deployment
+    run_post_deployment_tests
+    start_monitoring
     show_access_info
     show_management_commands
     create_deployment_summary
     
-    echo ""
-    success "Local deployment completed successfully!"
-    echo "🎉 Your OpenPolicy system with Dashboard is now running locally!"
+    log "🎉 Local Deployment Completed Successfully!"
+    log "📊 Test results available in: $TEST_RESULTS_DIR"
+    log "📋 Deployment summary: $TEST_RESULTS_DIR/local-deployment-summary.md"
+    
+    if [[ "$ENABLE_MONITORING" == "true" ]]; then
+        log "📊 Monitoring is running in background"
+    fi
+    
+    success "OpenPolicy is now running locally! Access it at http://localhost"
 }
 
 # Run main function

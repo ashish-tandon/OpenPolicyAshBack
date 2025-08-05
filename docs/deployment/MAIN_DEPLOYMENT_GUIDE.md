@@ -1,346 +1,496 @@
-# 🚀 OpenPolicy Main Deployment Guide
-
-**Date**: August 5, 2025  
-**Version**: 2.0.0  
-**Status**: Production Ready with Dashboard
+# 🚀 OpenPolicy Deployment Guide
 
 ## 📋 Quick Start - Choose Your Deployment
 
-### 🎯 **Which deployment should you choose?**
-
-| Environment | Use Case | Cost | Complexity | Features |
-|-------------|----------|------|------------|----------|
-| **Local (macOS)** | Development & Testing | Free | Easy | Full features, fast iteration |
-| **Azure** | Production & Scaling | $20-50/month | Medium | Auto-scaling, SSL, monitoring |
-| **QNAP** | Home/Office Server | Free | Easy | Persistent storage, always-on |
+| Environment | Use Case | Command | Testing | Monitoring |
+|-------------|----------|---------|---------|------------|
+| **Local** | Development & Testing | `./scripts/deployment/deploy-local.sh` | ✅ Included | Optional |
+| **QNAP** | Home/Office Server | `./scripts/deployment/deploy-qnap.sh` | ✅ Included | Optional |
+| **Azure** | Production Cloud | `./scripts/deployment/deploy-azure.sh` | ✅ Included | Optional |
+| **All** | Complete Deployment | `./scripts/deployment/deploy-all-environments.sh` | ✅ Included | Optional |
 
 ---
 
-## 🚀 **Deployment Commands**
+## 🧪 Comprehensive Testing & Deployment System
 
-### **Local Development (macOS)**
+### **New Testing Framework**
+
+Our deployment system now includes comprehensive testing at every stage:
+
+#### **1. Pre-Deployment Tests**
 ```bash
-# Clone and deploy
-git clone https://github.com/ashish-tandon/OpenPolicyAshBack.git
-cd OpenPolicyAshBack
-chmod +x scripts/deployment/deploy-local.sh
-./scripts/deployment/deploy-local.sh
+# Run comprehensive pre-deployment testing
+./scripts/testing/run-pre-deployment-tests.sh
+
+# Tests included:
+- Code quality checks (linting, security scanning)
+- Unit tests for all components
+- Integration tests
+- Build validation
+- Performance benchmarks
 ```
 
-### **Azure Production**
+#### **2. Deployment Validation Tests**
 ```bash
-# Login to Azure and deploy
-az login
-chmod +x scripts/deployment/deploy-azure.sh
-./scripts/deployment/deploy-azure.sh
-```
+# Validate deployment success
+./scripts/testing/validate-deployment.sh --url <deployment-url> --type <local|qnap|azure>
 
-### **QNAP Home Server**
-```bash
-# Deploy to QNAP NAS
-chmod +x scripts/deployment/deploy-qnap.sh
-./scripts/deployment/deploy-qnap.sh
-```
-
----
-
-## 📊 **Deployment Comparison**
-
-### **Local (macOS) - Development**
-- **✅ Pros**: Free, fast, easy debugging, full control
-- **❌ Cons**: Only available on your machine
-- **🎯 Best for**: Development, testing, personal use
-- **🔧 Platform**: Auto-detected (no OS spec needed)
-
-### **Azure - Production**
-- **✅ Pros**: Auto-scaling, SSL, monitoring, high availability
-- **❌ Cons**: Monthly cost, requires Azure account
-- **🎯 Best for**: Production, business use, high traffic
-- **🔧 Platform**: Linux/AMD64 (explicitly specified)
-
-### **QNAP - Home/Office**
-- **✅ Pros**: Free, persistent storage, always-on, local network
-- **❌ Cons**: Limited by NAS performance, no auto-scaling
-- **🎯 Best for**: Home office, small business, local network
-- **🔧 Platform**: ARM64 (QNAP native)
-
----
-
-## 🌐 **Access URLs After Deployment**
-
-### **Local**
-- Dashboard: http://localhost:80
-- API: http://localhost:8000
-- Health: http://localhost:8000/health
-- Docs: http://localhost:8000/docs
-
-### **Azure**
-- Dashboard: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io
-- API: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io/api
-- Health: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io/health
-- Docs: https://openpolicy-app.kindgrass-4bb31d5d.eastus.azurecontainerapps.io/api/docs
-
-### **QNAP**
-- Dashboard: http://ashishsnas.myqnapcloud.com:80
-- API: http://ashishsnas.myqnapcloud.com:8000
-- Health: http://ashishsnas.myqnapcloud.com:8000/health
-- Docs: http://ashishsnas.myqnapcloud.com:8000/docs
-
----
-
-## 🔧 **Platform-Specific Requirements**
-
-### **OS Specifications by Environment**
-
-| Environment | OS Required | Platform | Explicit Spec | Build Command |
-|-------------|-------------|----------|---------------|---------------|
-| **Local (macOS)** | macOS | Auto-detected | ❌ No | `docker build .` |
-| **Azure** | Linux | AMD64 | ✅ Yes | `docker build --platform linux/amd64` |
-| **QNAP** | QNAP QTS (Linux) | ARM64 | ❌ No | `docker build --platform linux/arm64` |
-
-### **Why OS Specifications Matter**
-
-- **Local**: Docker Desktop handles architecture detection automatically
-- **Azure**: Requires explicit Linux/AMD64 for compatibility with Azure Container Apps
-- **QNAP**: ARM64 is native to QNAP processors, no explicit specification needed
-
----
-
-## 📦 **What's Included in All Deployments**
-
-### **✅ Dashboard/UI**
-- Modern React dashboard with real-time monitoring
-- Responsive design with Tailwind CSS
-- Statistics and health monitoring
-- API testing interface
-
-### **✅ FastAPI Backend**
-- RESTful API endpoints
-- GraphQL support
-- Comprehensive documentation
-- Health checks and monitoring
-
-### **✅ Database**
-- SQLite database (persistent storage)
-- Automatic schema initialization
-- Data migration support
-
-### **✅ Rate Limiting**
-- In-memory rate limiting (no Redis dependency)
-- Configurable limits per IP/API key
-- Automatic cleanup of old requests
-
-### **✅ Security**
-- HTTPS with SSL (Azure)
+# Validations:
+- Health checks
+- API endpoints
+- Dashboard functionality
+- Database connectivity
+- Performance metrics
 - Security headers
-- API key authentication
-- CORS configuration
+```
+
+#### **3. Continuous Monitoring**
+```bash
+# Start continuous monitoring
+./scripts/testing/monitor-deployment.sh --url <deployment-url> --type <local|qnap|azure> --interval 60
+
+# Monitoring includes:
+- Real-time health checks
+- Performance tracking
+- Error detection and alerting
+- Metrics collection
+- Automated reporting
+```
 
 ---
 
-## 🛠️ **Management Commands**
+## 🚀 Deployment Commands
 
-### **Local**
+### **Local Deployment**
+```bash
+# Basic deployment
+./scripts/deployment/deploy-local.sh
+
+# With monitoring
+./scripts/deployment/deploy-local.sh --enable-monitoring --monitoring-email your@email.com
+
+# Skip testing (not recommended)
+./scripts/deployment/deploy-local.sh --no-testing
+
+# Skip specific test phases
+./scripts/deployment/deploy-local.sh --skip-pre-tests --skip-post-tests
+```
+
+### **QNAP Deployment**
+```bash
+# Basic deployment (requires QNAP configuration)
+./scripts/deployment/deploy-qnap.sh
+
+# With QNAP host configuration
+QNAP_HOST=192.168.1.100 QNAP_USER=admin ./scripts/deployment/deploy-qnap.sh
+
+# With monitoring
+./scripts/deployment/deploy-qnap.sh --enable-monitoring --monitoring-email your@email.com
+```
+
+### **Azure Deployment**
+```bash
+# Basic deployment
+./scripts/deployment/deploy-azure.sh
+
+# Skip build (use existing image)
+./scripts/deployment/deploy-azure.sh --skip-build
+
+# With monitoring
+./scripts/deployment/deploy-azure.sh --enable-monitoring --monitoring-email your@email.com
+```
+
+### **Comprehensive All-Environment Deployment**
+```bash
+# Deploy to all environments with full testing
+./scripts/deployment/deploy-all-environments.sh
+
+# Deploy to specific environments only
+./scripts/deployment/deploy-all-environments.sh --local-only
+./scripts/deployment/deploy-all-environments.sh --azure-only
+./scripts/deployment/deploy-all-environments.sh --qnap-only
+
+# Skip specific environments
+./scripts/deployment/deploy-all-environments.sh --no-local --no-qnap
+
+# With QNAP configuration
+./scripts/deployment/deploy-all-environments.sh --qnap-host 192.168.1.100 --qnap-user admin
+
+# With monitoring
+./scripts/deployment/deploy-all-environments.sh --enable-monitoring --monitoring-email your@email.com
+
+# Skip code repository pushes
+./scripts/deployment/deploy-all-environments.sh --no-github --no-dockerhub
+```
+
+---
+
+## 🔧 Deployment Process with Testing
+
+### **Phase 1: Pre-Deployment**
+1. **Prerequisites Check**
+   - Verify required tools (Docker, Git, Azure CLI, etc.)
+   - Check required files and dependencies
+   - Validate environment configuration
+
+2. **Pre-Deployment Testing**
+   - Code quality checks (linting, security scanning)
+   - Unit tests for all components
+   - Integration tests
+   - Build validation
+   - Performance benchmarks
+
+3. **Code Repository Management**
+   - Commit changes to Git
+   - Push to GitHub
+   - Build and push Docker images to Docker Hub
+
+### **Phase 2: Deployment**
+1. **Environment Setup**
+   - Create necessary resources (Azure, QNAP, local)
+   - Configure networking and security
+   - Set up monitoring and logging
+
+2. **Application Deployment**
+   - Deploy containers to target environments
+   - Configure environment variables
+   - Initialize databases and services
+
+3. **Health Validation**
+   - Wait for services to be ready
+   - Verify health endpoints
+   - Check component connectivity
+
+### **Phase 3: Post-Deployment**
+1. **Deployment Validation**
+   - Run comprehensive validation tests
+   - Verify all API endpoints
+   - Test dashboard functionality
+   - Check database connectivity
+
+2. **Performance Monitoring**
+   - Start continuous monitoring
+   - Set up alerting
+   - Begin metrics collection
+
+3. **Documentation & Reporting**
+   - Generate deployment summaries
+   - Create access information
+   - Document troubleshooting steps
+
+---
+
+## 📊 Testing & Monitoring Features
+
+### **Automated Testing**
+- **Pre-deployment tests**: Code quality, unit tests, integration tests
+- **Deployment validation**: Health checks, API testing, functionality verification
+- **Performance testing**: Response time measurement, resource usage monitoring
+- **Security testing**: Header validation, vulnerability scanning
+
+### **Continuous Monitoring**
+- **Health monitoring**: Real-time health checks every 60 seconds
+- **Performance tracking**: Response time, throughput, error rate monitoring
+- **Alert system**: Email notifications for critical issues
+- **Metrics collection**: Historical performance data and trends
+- **Log aggregation**: Centralized logging and error tracking
+
+### **Test Reports**
+- **Pre-deployment reports**: Code coverage, security scan results, performance benchmarks
+- **Deployment validation reports**: Health status, API functionality, component connectivity
+- **Monitoring reports**: Uptime statistics, performance trends, alert history
+
+---
+
+## 🌐 Environment-Specific Requirements
+
+### **Local Development (Mac)**
+```bash
+# Requirements
+- Docker Desktop
+- Git
+- curl
+
+# Network Configuration
+- Host: localhost
+- Port: 80 (Nginx), 8000 (FastAPI)
+- Database: SQLite (file-based)
+- Rate Limiting: In-memory
+```
+
+### **QNAP Container Station**
+```bash
+# Requirements
+- QNAP NAS with Container Station
+- SSH access to QNAP
+- Docker support
+
+# Network Configuration
+- Host: QNAP IP (192.168.x.x)
+- Port: 80 (Nginx), 8000 (FastAPI)
+- Database: SQLite (persistent volume)
+- Rate Limiting: In-memory
+```
+
+### **Azure Container Apps**
+```bash
+# Requirements
+- Azure CLI
+- Azure subscription
+- Docker
+
+# Network Configuration
+- Host: Azure Container Apps FQDN
+- Port: 80 (Nginx), 8000 (FastAPI)
+- Database: SQLite (ephemeral)
+- Rate Limiting: In-memory
+- Platform: Linux/AMD64 (required)
+```
+
+---
+
+## 🔍 Access URLs
+
+### **Local Environment**
+- **Dashboard**: http://localhost
+- **API**: http://localhost/api
+- **Health**: http://localhost/health
+- **Stats**: http://localhost/stats
+- **API Docs**: http://localhost/docs
+
+### **QNAP Environment**
+- **Dashboard**: http://QNAP_IP
+- **API**: http://QNAP_IP/api
+- **Health**: http://QNAP_IP/health
+- **Stats**: http://QNAP_IP/stats
+- **API Docs**: http://QNAP_IP/docs
+
+### **Azure Environment**
+- **Dashboard**: https://app-name.region.azurecontainerapps.io
+- **API**: https://app-name.region.azurecontainerapps.io/api
+- **Health**: https://app-name.region.azurecontainerapps.io/health
+- **Stats**: https://app-name.region.azurecontainerapps.io/stats
+- **API Docs**: https://app-name.region.azurecontainerapps.io/docs
+
+---
+
+## 🛠️ Management Commands
+
+### **Local Environment**
 ```bash
 # View logs
 docker-compose logs -f
+
+# Stop application
+docker-compose down
+
+# Restart application
+docker-compose restart
 
 # Check status
 docker-compose ps
 
-# Restart
-docker-compose restart
-
-# Update
-./scripts/deployment/deploy-local.sh
+# Run validation tests
+./scripts/testing/validate-deployment.sh --url http://localhost --type local
 ```
 
-### **Azure**
+### **QNAP Environment**
+```bash
+# View logs (via SSH)
+ssh user@qnap-ip "docker logs openpolicy_qnap"
+
+# Stop application (via SSH)
+ssh user@qnap-ip "docker stop openpolicy_qnap"
+
+# Restart application (via SSH)
+ssh user@qnap-ip "docker restart openpolicy_qnap"
+
+# Check status (via SSH)
+ssh user@qnap-ip "docker ps"
+```
+
+### **Azure Environment**
 ```bash
 # View logs
-az containerapp logs show --resource-group openpolicy-rg --name openpolicy-app
+az containerapp logs show --resource-group openpolicy-rg --name openpolicy-app --follow
+
+# Stop application
+az containerapp stop --resource-group openpolicy-rg --name openpolicy-app
+
+# Restart application
+az containerapp restart --resource-group openpolicy-rg --name openpolicy-app
 
 # Check status
 az containerapp show --resource-group openpolicy-rg --name openpolicy-app
 
-# Update
-./scripts/deployment/deploy-azure.sh
-```
-
-### **QNAP**
-```bash
-# SSH to QNAP
-ssh admin@ashishsnas.myqnapcloud.com
-
-# View logs
-docker logs openpolicy_qnap
-
-# Check status
-docker ps
-
-# Update
-./scripts/deployment/deploy-qnap.sh
+# Run validation tests
+./scripts/testing/validate-deployment.sh --url https://app-url --type azure
 ```
 
 ---
 
-## 🔍 **Troubleshooting**
+## 📈 Performance & Resources
+
+### **Resource Requirements**
+- **CPU**: 2 cores minimum
+- **Memory**: 4GB minimum
+- **Storage**: 8GB minimum
+- **Network**: Standard HTTP/HTTPS ports
+
+### **Performance Targets**
+- **Response Time**: < 2 seconds
+- **Uptime**: > 99.9%
+- **Error Rate**: < 1%
+- **Dashboard Load**: < 3 seconds
+
+### **Scaling**
+- **Local**: Single container
+- **QNAP**: Single container with resource limits
+- **Azure**: Auto-scaling (1-3 replicas)
+
+---
+
+## 🔒 Security Features
+
+### **Built-in Security**
+- **HTTPS**: Automatic SSL/TLS (Azure)
+- **Security Headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+- **Rate Limiting**: In-memory rate limiting (1000 requests/hour)
+- **Input Validation**: Comprehensive API input validation
+- **Error Handling**: Secure error responses
+
+### **Network Security**
+- **Firewall**: Environment-specific firewall rules
+- **Access Control**: Environment-specific access controls
+- **Monitoring**: Security event monitoring and alerting
+
+---
+
+## 🚨 Troubleshooting
 
 ### **Common Issues**
 
-#### **Local Deployment Issues**
+#### **Health Check Failures**
 ```bash
-# Docker not running
-docker info
-
-# Port conflicts
-lsof -i :80
-lsof -i :8000
-
-# Rebuild
-docker-compose up -d --build
-```
-
-#### **Azure Deployment Issues**
-```bash
-# Check container app status
-az containerapp show --resource-group openpolicy-rg --name openpolicy-app
+# Check container status
+docker ps  # Local
+ssh user@qnap-ip "docker ps"  # QNAP
+az containerapp show --resource-group openpolicy-rg --name openpolicy-app  # Azure
 
 # View logs
-az containerapp logs show --resource-group openpolicy-rg --name openpolicy-app
-
-# Platform specification error
-docker build --platform linux/amd64 .
+docker logs openpolicy_local  # Local
+ssh user@qnap-ip "docker logs openpolicy_qnap"  # QNAP
+az containerapp logs show --resource-group openpolicy-rg --name openpolicy-app  # Azure
 ```
 
-#### **QNAP Deployment Issues**
+#### **API Endpoint Issues**
 ```bash
-# SSH connection
-ssh admin@ashishsnas.myqnapcloud.com
+# Test health endpoint
+curl -f http://localhost/health  # Local
+curl -f http://qnap-ip/health  # QNAP
+curl -f https://azure-url/health  # Azure
 
-# Container status
-docker ps
-
-# ARM64 compatibility
-docker build --platform linux/arm64 .
+# Run validation tests
+./scripts/testing/validate-deployment.sh --url <url> --type <environment>
 ```
 
----
-
-## 📈 **Performance & Resources**
-
-### **Resource Requirements**
-- **Memory**: 2GB minimum (4GB recommended for Azure)
-- **CPU**: 1 core minimum (2 cores recommended for Azure)
-- **Storage**: 1GB for application + data
-- **Network**: Standard internet connectivity
-
-### **Performance by Environment**
-- **Local**: Best performance (native)
-- **Azure**: Excellent performance (x86_64 optimized)
-- **QNAP**: Good performance (ARM64 optimized)
-
----
-
-## 💰 **Cost Analysis**
-
-| Environment | Monthly Cost | Features | Best For |
-|-------------|--------------|----------|----------|
-| **Local** | Free | Full features | Development |
-| **Azure** | $20-50 | Auto-scaling, SSL, monitoring | Production |
-| **QNAP** | Free | Persistent storage | Home/Office |
-
----
-
-## 🎯 **Production Recommendations**
-
-### **Development Phase**
-- **Platform**: Local macOS
-- **Setup**: `./scripts/deployment/deploy-local.sh`
-- **Cost**: Free
-- **Benefits**: Fast iteration, easy debugging
-
-### **Testing Phase**
-- **Platform**: QNAP Container Station
-- **Setup**: `./scripts/deployment/deploy-qnap.sh`
-- **Cost**: Free
-- **Benefits**: Persistent storage, always-on
-
-### **Production Phase**
-- **Platform**: Azure Container Apps
-- **Setup**: `./scripts/deployment/deploy-azure.sh`
-- **Cost**: $20-50/month
-- **Benefits**: Auto-scaling, SSL, monitoring, high availability
-
----
-
-## 📞 **Support & Monitoring**
-
-### **Health Checks**
+#### **Database Issues**
 ```bash
-# All environments
-curl [URL]/health
+# Check database connectivity
+curl -f http://localhost/stats  # Local
+curl -f http://qnap-ip/stats  # QNAP
+curl -f https://azure-url/stats  # Azure
 ```
 
-### **Logs**
+### **Performance Issues**
 ```bash
-# Local
-docker-compose logs -f
+# Check resource usage
+docker stats  # Local
+ssh user@qnap-ip "docker stats"  # QNAP
+az containerapp show --resource-group openpolicy-rg --name openpolicy-app --query "properties.template.containers[0].resources"  # Azure
 
-# Azure
-az containerapp logs show --resource-group openpolicy-rg --name openpolicy-app
-
-# QNAP
-docker logs openpolicy_qnap
+# Run performance tests
+./scripts/testing/validate-deployment.sh --url <url> --type <environment>
 ```
 
-### **Updates**
+---
+
+## 📊 Monitoring & Alerting
+
+### **Monitoring Setup**
 ```bash
-# All environments
-./scripts/deployment/deploy-[environment].sh
+# Start monitoring for any environment
+./scripts/testing/monitor-deployment.sh --url <deployment-url> --type <environment> --interval 60 --email your@email.com
+
+# Monitor local environment
+./scripts/testing/monitor-deployment.sh --url http://localhost --type local --enable-monitoring
+
+# Monitor Azure environment
+./scripts/testing/monitor-deployment.sh --url https://azure-url --type azure --enable-monitoring
 ```
 
----
+### **Monitoring Features**
+- **Real-time health checks**: Every 60 seconds
+- **Performance metrics**: Response times, throughput, error rates
+- **Resource monitoring**: CPU, memory, disk usage
+- **Alert notifications**: Email alerts for critical issues
+- **Historical data**: Performance trends and statistics
 
-## 🎉 **Success Metrics**
-
-### ✅ **Completed**
-- [x] Redis dependency removed (in-memory rate limiting)
-- [x] Dashboard/UI included in all deployments
-- [x] Platform-specific OS requirements implemented
-- [x] File cleanup and consolidation
-- [x] Local deployment working
-- [x] Azure deployment working
-- [x] QNAP deployment ready
-- [x] Comprehensive documentation
-
-### 📈 **Performance**
-- **Infrastructure**: 100% Complete
-- **Deployment Automation**: 100% Complete
-- **Platform Specifications**: 100% Complete
-- **Application Functionality**: 100% Complete
-- **Documentation**: 100% Complete
+### **Monitoring Reports**
+- **Uptime statistics**: Service availability percentages
+- **Performance trends**: Response time and throughput trends
+- **Error analysis**: Error rates and types
+- **Resource utilization**: CPU, memory, and disk usage
 
 ---
 
-## 🎊 **Final Status**
+## 🎯 Success Metrics
 
-**🎉 Your OpenPolicy system is now production-ready with:**
+### **Deployment Success Rate**
+- **Target**: > 95%
+- **Measurement**: Successful deployments / Total deployments
 
-- ✅ **Complete dashboard functionality** across all environments
-- ✅ **No Redis dependency** (simplified architecture)
-- ✅ **Proper OS specifications** for each platform
-- ✅ **Clean, organized codebase** with consolidated documentation
-- ✅ **Comprehensive monitoring and logging**
-- ✅ **Auto-scaling and SSL** on Azure
+### **Test Coverage**
+- **Target**: > 80%
+- **Measurement**: Lines of code covered by tests
 
-**Choose your deployment based on your needs and get started!** 🚀
+### **Performance Metrics**
+- **Response Time**: < 2 seconds
+- **Uptime**: > 99.9%
+- **Error Rate**: < 1%
+
+### **User Experience**
+- **Dashboard Load Time**: < 3 seconds
+- **API Response Time**: < 1 second
+- **Data Accuracy**: 100%
 
 ---
 
-**Deployment completed at**: August 5, 2025 17:42:15 UTC  
-**Total environments**: 3 (Local, Azure, QNAP)  
-**OS specifications**: Properly configured for all platforms  
-**Redis dependency**: Completely removed  
-**Dashboard**: Included in all deployments  
-**Status**: ✅ **SUCCESSFUL DEPLOYMENT ACROSS ALL ENVIRONMENTS** 
+## 📚 Additional Resources
+
+### **Documentation**
+- [Project Structure](./PROJECT_STRUCTURE.md)
+- [Architecture Guide](../architecture/ARCHITECTURE.md)
+- [Development Guide](../development/DEVELOPMENT.md)
+- [Testing Guide](../testing/TESTING.md)
+
+### **Scripts**
+- [Pre-deployment Tests](../../scripts/testing/run-pre-deployment-tests.sh)
+- [Deployment Validation](../../scripts/testing/validate-deployment.sh)
+- [Monitoring](../../scripts/testing/monitor-deployment.sh)
+- [Local Deployment](../../scripts/deployment/deploy-local.sh)
+- [QNAP Deployment](../../scripts/deployment/deploy-qnap.sh)
+- [Azure Deployment](../../scripts/deployment/deploy-azure.sh)
+- [All Environments Deployment](../../scripts/deployment/deploy-all-environments.sh)
+
+### **Support**
+- **Issues**: Check troubleshooting section above
+- **Logs**: Review deployment and monitoring logs
+- **Tests**: Run validation tests for specific issues
+- **Documentation**: Refer to architecture and development guides
+
+---
+
+**Status**: ✅ **Production Ready**  
+**Last Updated**: August 5, 2025  
+**Version**: 2.0 (Comprehensive Testing & Monitoring) 
