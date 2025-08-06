@@ -1,0 +1,304 @@
+version: '3.8'
+
+# OpenPolicy Merge - Docker Compose Configuration
+# Single-container architecture with all services managed by Supervisor
+# Includes PostgreSQL, Redis, and all application components
+
+services:
+  # ==========================================================================
+  # Main Application Container
+  # ==========================================================================
+  openpolicy-merge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: openpolicy-merge-app
+    ports:
+      - "80:80"       # Nginx (frontend + API proxy)
+      - "8000:8000"   # FastAPI (direct access for development)
+      - "5555:5555"   # Flower (Celery monitoring)
+      - "3000:3000"   # React (development mode)
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://openpolicy:secure_password@db:5432/openpolicy_merge
+      DB_POOL_SIZE: 20
+      DB_MAX_OVERFLOW: 30
+      DB_ECHO: "false"
+      
+      # Redis Configuration
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      
+      # Application Configuration
+      ENVIRONMENT: production
+      DEBUG: "false"
+      LOG_LEVEL: info
+      SECRET_KEY: your-secret-key-change-in-production
+      
+      # API Configuration
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      API_WORKERS: 4
+      
+      # Frontend Configuration
+      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_ENVIRONMENT: production
+      
+      # Monitoring Configuration
+      PROMETHEUS_PORT: 9090
+      GRAFANA_PORT: 3001
+      
+      # Security Configuration
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:80,https://openpolicymerge.org"
+      ALLOWED_HOSTS: "localhost,openpolicymerge.org"
+      
+      # Scraping Configuration
+      SCRAPING_ENABLED: "true"
+      SCRAPING_SCHEDULE: "0 2 * * *"  # Daily at 2 AM
+      SCRAPING_RATE_LIMIT: 1.0
+      
+      # Data Sources
+      REPRESENT_API_URL: https://represent.opennorth.ca
+      PARLIAMENT_API_URL: https://www.ourcommons.ca
+      
+    volumes:
+      # Application data
+      - app_data:/app/data
+      - app_logs:/app/logs
+      
+      # Configuration files
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/supervisord.conf:/etc/supervisor/supervisord.conf:ro
+      
+      # Development volumes (comment out for production)
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - openpolicy-network
+    
+    labels:
+      - "com.openpolicymerge.service=main"
+      - "com.openpolicymerge.version=1.0.0"
+
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: openpolicy-merge-db
+    environment:
+      POSTGRES_DB: openpolicy_merge
+      POSTGRES_USER: openpolicy
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      
+      # Performance tuning
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_CHECKPOINT_COMPLETION_TARGET: 0.9
+      POSTGRES_WAL_BUFFERS: 16MB
+      POSTGRES_DEFAULT_STATISTICS_TARGET: 100
+      
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      # Persistent database storage
+      - postgres_data:/var/lib/postgresql/data
+      
+      # Custom configuration
+      - ./docker/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      
+      # Initialization scripts
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/init-extensions.sql:/docker-entrypoint-initdb.d/02-extensions.sql:ro
+    
+    command: >
+      postgres 
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c log_statement=mod
+      -c log_min_duration_statement=1000
+      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openpolicy -d openpolicy_merge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    networks:
+      - openpolicy-network
+    
+    labels:
+      - "com.openpolicymerge.service=database"
+
+  # ==========================================================================
+  # Redis Cache & Message Broker
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: openpolicy-merge-redis
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      # Persistent Redis data
+      - redis_data:/data
+      
+      # Custom configuration
+      - ./docker/redis.conf:/etc/redis/redis.conf:ro
+    
+    command: redis-server /etc/redis/redis.conf
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    
+    networks:
+      - openpolicy-network
+    
+    labels:
+      - "com.openpolicymerge.service=cache"
+
+  # ==========================================================================
+  # Monitoring Stack (Optional - for production)
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: openpolicy-merge-prometheus
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    
+    restart: unless-stopped
+    
+    networks:
+      - openpolicy-network
+    
+    profiles:
+      - monitoring
+    
+    labels:
+      - "com.openpolicymerge.service=monitoring"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: openpolicy-merge-grafana
+    ports:
+      - "3001:3000"
+    
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    restart: unless-stopped
+    
+    networks:
+      - openpolicy-network
+    
+    profiles:
+      - monitoring
+    
+    labels:
+      - "com.openpolicymerge.service=visualization"
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  # Application data
+  app_data:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=app-data"
+  
+  app_logs:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=app-logs"
+  
+  # Database data
+  postgres_data:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=postgres-data"
+  
+  # Cache data
+  redis_data:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=redis-data"
+  
+  # Monitoring data
+  prometheus_data:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=prometheus-data"
+  
+  grafana_data:
+    driver: local
+    labels:
+      - "com.openpolicymerge.volume=grafana-data"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  openpolicy-network:
+    driver: bridge
+    labels:
+      - "com.openpolicymerge.network=main"
+
+# =============================================================================
+# Development Override Example
+# =============================================================================
+# To use development mode:
+# docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+# For production with monitoring:
+# docker-compose --profile monitoring up
+
+# For database only:
+# docker-compose up db redis
