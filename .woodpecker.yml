@@ -1,0 +1,20 @@
+# Woodpecker backup-verify pipeline for GitHub -> Gitea mirror (ashish101/<repo>).
+# Purpose: prove the mirror clone is intact and report repository state.
+# Triggered: push to mirror (webhook), or manual POST /api/repos/{id}/pipelines
+# {"branch":"<default>"} (event=manual). Gitea 1.27.3 mirror-sync DOES fire push
+# webhooks (verified 2026-09-09 sync 22:58:36Z -> pipeline 22:58:42Z); payloads
+# carry public ROOT_URL clone URLs which can re-poison Woodpecker repo records
+# (guarded by wp-repair-guard timer on vm202).
+when:
+  event: [push, pull_request, manual]
+
+steps:
+  - name: backup-verify
+    image: alpine:3.21
+    commands:
+      - apk add --no-cache git
+      - git fsck --full
+      - 'echo "HEAD: $(git rev-parse HEAD)"'
+      - 'echo "branch: $(git branch --show-current)"'
+      - git count-objects -vH
+      - 'git log -1 --format="%h %cs %s"'
